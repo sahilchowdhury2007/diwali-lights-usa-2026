@@ -37,6 +37,10 @@ The follow-up Code Editor run used quality flag 0 and nonnegative radiance and c
 
 The Bay Area test region had zero available samples in the same-day radiance band on both candidate product dates, before the study's quality filters. Screen other regions on those same dates for coverage before choosing locations for a brightness comparison.
 
+The five-metro screen found zero available samples on October 20 UTC in all five boxes. On October 21 UTC, the Bay Area, Los Angeles, Chicago, and New York–North Jersey boxes still had zero available samples. Dallas–Fort Worth had 23,807 available samples, and 22,756 of 25,742 sampled cells (88.4%) passed all filters. NASA lists one nighttime Suomi NPP granule overlapping the Dallas–Fort Worth box on October 21 UTC. Its range of 08:24–08:30 UTC corresponds to 03:24–03:30 CDT after the October 20 evening. [NASA granule metadata](https://cmr.earthdata.nasa.gov/search/concepts/G3825772898-LAADS.html)
+
+The [Dallas pilot](../earth-engine/02-dallas-pilot.js) subtracts the median of five candidate comparison images from each usable event pixel. The control product dates are September 23 and 30 and October 7, 14, and 28 UTC, corresponding to nearby Monday nights locally. Each comparison pixel requires at least three usable control readings. This is an exploratory comparison in a metro selected for coverage. It does not estimate a causal effect or account for all differences in overpass timing and viewing geometry. The pilot results are pending.
+
 After access works:
 
 1. Select several test regions and comparison regions before inspecting anomaly maps. Include regions with differing urban brightness, weather, and geography; avoid selecting only apparent hotspots.
