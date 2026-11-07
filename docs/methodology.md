@@ -24,7 +24,18 @@ Reference festival dates from the supplied project brief are October 20, 2025 an
 
 ## First diagnostic
 
-The coverage script checks September 22 through November 10, 2025 over a small Bay Area bounding box. In the initial Code Editor run, the cloud and snow filters and quality flags 0 or 1 left usable pixels on 46 of 50 product dates. The counts for October 19 through 22 UTC were 13,732, 0, 0, and 1,628. These counts record the initial filter. Rerun coverage using the corrected flag rule before comparing brightness.
+The coverage script checks September 22 through November 10, 2025 over a small Bay Area bounding box. In the initial Code Editor run, the cloud and snow filters and quality flags 0 or 1 left usable pixels on 46 of 50 product dates. The counts for October 19 through 22 UTC were 13,732, 0, 0, and 1,628.
+
+The follow-up Code Editor run used quality flag 0 and nonnegative radiance and counted pixels at each screening stage. At least one pixel passed all checks on 45 of 50 dates.
+
+| UTC product date | Available radiance | High quality at night | Clear and snow free | Passed all filters |
+| --- | ---: | ---: | ---: | ---: |
+| 2025-10-19 | 14,830 | 14,825 | 14,825 | 13,727 |
+| 2025-10-20 | 0 | 0 | 0 | 0 |
+| 2025-10-21 | 0 | 0 | 0 | 0 |
+| 2025-10-22 | 2,076 | 657 | 657 | 503 |
+
+The Bay Area test region had zero available samples in the same-day radiance band on both candidate product dates, before the study's quality filters. Screen other regions on those same dates for coverage before choosing locations for a brightness comparison.
 
 After access works:
 
