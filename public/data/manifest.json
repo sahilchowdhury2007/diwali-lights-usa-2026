@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "updatedAt": null,
+  "source": "NASA/VIIRS/002/VNP46A2",
+  "years": {
+    "2025": {
+      "eventDate": "2025-10-20",
+      "status": "not_processed",
+      "observations": []
+    },
+    "2026": {
+      "eventDate": "2026-11-08",
+      "status": "awaiting_event",
+      "observations": []
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "diwali-lights-usa-2026",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "maplibre-gl": "^6.16.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "vite": "^8.3.6"
+  },
+  "devDependencies": {
+    "topojson-client": "^3.1.0",
+    "us-atlas": "^3.0.1"
+  }
+}
