@@ -43,7 +43,19 @@ The [Dallas pilot](../earth-engine/02-dallas-pilot.js) subtracts the median of f
 
 The [night comparison](../earth-engine/03-dallas-night-comparison.js) reran the pilot on one 500 m grid with unweighted reductions. It compared 22,340 of the 22,756 usable event cells (98.2%) with the control median. The corrected mean change was −1.1411 and the median was −1.5363 nW/cm²/sr. No cell passed the quality filters on all six dates, so the shared six-night comparison returned counts of zero and null changes.
 
-The [paired comparison](../earth-engine/04-dallas-paired-comparison.js) matches the event with each ordinary night separately. Both dates in a pair use the same cells and the same baseline, which is the median of at least two usable readings from the other four ordinary nights. Pixel coverage can differ from pair to pair. Report the count alongside each result. These comparisons are descriptive and retain differences in overpass time and viewing geometry. The paired results are pending.
+The [paired comparison](../earth-engine/04-dallas-paired-comparison.js) matches the event with each ordinary night separately. Both dates in a pair use the same cells and the same baseline, which is the median of at least two usable readings from the other four ordinary nights. Pixel coverage can differ from pair to pair. Changes below are event minus ordinary night in nW/cm²/sr.
+
+| Ordinary UTC date | Matched cells | Mean change | Median change |
+| --- | ---: | ---: | ---: |
+| 2025-09-23 | 22,266 | −1.56 | −1.51 |
+| 2025-09-30 | 0 | — | — |
+| 2025-10-07 | 20,597 | −1.62 | +1.57 |
+| 2025-10-14 | 22,015 | −2.85 | −1.72 |
+| 2025-10-28 | 21,857 | −1.66 | −1.46 |
+
+The mean was lower on the event night in all four usable pairs. The positive October 7 median shows that the distribution of local changes differed from the overall mean. These are descriptive results for the Dallas pilot. Coverage differs by pair, and the comparison retains differences in overpass time and viewing geometry.
+
+The [Dallas export script](../earth-engine/05-export-dallas-pilot.js) prepares a GeoTIFF for the dashboard using the fixed-grid pilot baseline. Its four bands store the event radiance, baseline median, signed change, and usable control count. It encodes missing cells as `-9999` and uses Web Mercator for display. The web map should keep missing cells transparent and use the same signed color scale for comparable dates.
 
 After access works:
 
