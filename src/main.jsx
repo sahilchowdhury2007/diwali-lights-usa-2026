@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as maplibre from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { makeNightFrames, OvernightPlayback } from './overnight.jsx';
 import './style.css';
 
 maplibre.setWorkerUrl(workerUrl);
@@ -14,6 +15,13 @@ const locations = {
   'Alaska': [[-170, 51], [-130, 72]],
   'Hawaii': [[-161, 18], [-154, 23]],
 };
+const unit = 'nW/cm²/sr';
+const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
+const changeNumber = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2, signDisplay: 'exceptZero' });
+
+function dataUrl(path) {
+  return new URL(path, new URL(`${base}data/`, window.location.href)).href;
+}
 
 function dateAtOffset(year, offset) {
   const date = new Date(`${dates[year]}T12:00:00Z`);
@@ -32,14 +40,59 @@ function App() {
   const [dataError, setDataError] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [mapReady, setMapReady] = useState(false);
-  const [area, setArea] = useState('United States');
+  const [area, setArea] = useState('Observation area');
   const [opacity, setOpacity] = useState(85);
   const [showMethod, setShowMethod] = useState(false);
+  const [frameIndex, setFrameIndex] = useState(null);
+  const [playing, setPlaying] = useState(false);
   const mapContainer = useRef(null);
   const map = useRef(null);
   const date = dateAtOffset(year, offset);
-  const record = manifest?.years?.[year]?.observations?.find(item => item.date === date);
+  const yearData = manifest?.years?.[year];
+  const observations = useMemo(
+    () => yearData?.observations?.filter(item => item.date === date && item.status === 'ready') ?? [],
+    [yearData, date],
+  );
+  const frames = useMemo(
+    () => yearData?.overnight && date === yearData.eventDate ? makeNightFrames(yearData.overnight, observations) : [],
+    [yearData, date, observations],
+  );
+  const initialFrame = Math.max(0, frames.findIndex(frame => frame.observation));
+  const activeFrame = frameIndex ?? initialFrame;
+  const record = frames.length ? frames[activeFrame]?.observation : observations[0];
+  const observationArea = observations[0];
   const hasRaster = record?.status === 'ready' && Boolean(record.raster?.url);
+
+  function selectDate(nextYear, nextOffset) {
+    setYear(nextYear);
+    setOffset(nextOffset);
+    setFrameIndex(null);
+    setPlaying(false);
+  }
+
+  function selectFrame(index) {
+    setFrameIndex(index);
+    setPlaying(false);
+  }
+
+  function togglePlayback() {
+    if (playing) {
+      setPlaying(false);
+      return;
+    }
+    if (frameIndex === null || activeFrame === frames.length - 1) setFrameIndex(0);
+    setPlaying(true);
+  }
+
+  useEffect(() => {
+    if (!playing || activeFrame >= frames.length - 1) return;
+    const timer = setTimeout(() => {
+      const next = activeFrame + 1;
+      setFrameIndex(next);
+      if (next === frames.length - 1) setPlaying(false);
+    }, frames[activeFrame]?.observation ? 2200 : 550);
+    return () => clearTimeout(timer);
+  }, [activeFrame, frames, playing]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -88,8 +141,12 @@ function App() {
 
   useEffect(() => {
     if (!map.current || !mapReady) return;
-    map.current.fitBounds(locations[area], { padding: 35, duration: 700 });
-  }, [area, mapReady]);
+    const coordinates = observationArea?.raster?.coordinates;
+    const bounds = area === 'Observation area' && coordinates
+      ? [coordinates[3], coordinates[1]]
+      : locations[area] ?? locations['United States'];
+    map.current.fitBounds(bounds, { padding: 42, duration: 700 });
+  }, [area, observationArea, mapReady]);
 
   useEffect(() => {
     const instance = map.current;
@@ -98,16 +155,54 @@ function App() {
     if (instance.getSource('excess-light')) instance.removeSource('excess-light');
     if (!hasRaster) return;
     // Export paths are relative to the data directory, so project Pages URLs work.
-    const url = new URL(record.raster.url, new URL(`${base}data/`, window.location.href)).href;
-    instance.addSource('excess-light', { type: 'image', url, coordinates: record.raster.coordinates });
-    instance.addLayer({ id: 'excess-light', type: 'raster', source: 'excess-light', paint: { 'raster-opacity': opacity / 100, 'raster-fade-duration': 0 } });
+    instance.addSource('excess-light', { type: 'image', url: dataUrl(record.raster.url), coordinates: record.raster.coordinates });
+    instance.addLayer({ id: 'excess-light', type: 'raster', source: 'excess-light', paint: { 'raster-opacity': opacity / 100, 'raster-fade-duration': 0, 'raster-resampling': 'nearest' } });
   }, [hasRaster, record, mapReady]);
 
   useEffect(() => {
     if (mapReady && map.current?.getLayer('excess-light')) map.current.setPaintProperty('excess-light', 'raster-opacity', opacity / 100);
   }, [opacity, mapReady]);
 
-  const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index' : hasRaster ? 'Processed observation' : year === 2025 ? 'Historical data not processed' : '2026 observations pending';
+  useEffect(() => {
+    const instance = map.current;
+    const raster = record?.raster;
+    if (!instance || !mapReady || !raster?.pixelsUrl) return;
+    const controller = new AbortController();
+    const popup = new maplibre.Popup({ maxWidth: '240px', className: 'reading-popup' });
+    let grid;
+    let failed = false;
+    fetch(dataUrl(raster.pixelsUrl), { signal: controller.signal })
+      .then(response => { if (!response.ok) throw new Error('Pixel readings unavailable'); return response.json(); })
+      .then(data => { grid = data; })
+      .catch(error => { if (error.name !== 'AbortError') failed = true; });
+
+    const topLeft = maplibre.MercatorCoordinate.fromLngLat(raster.coordinates[0]);
+    const bottomRight = maplibre.MercatorCoordinate.fromLngLat(raster.coordinates[2]);
+    function inspect({ lngLat }) {
+      const point = maplibre.MercatorCoordinate.fromLngLat(lngLat);
+      const x = (point.x - topLeft.x) / (bottomRight.x - topLeft.x);
+      const y = (point.y - topLeft.y) / (bottomRight.y - topLeft.y);
+      if (x < 0 || x >= 1 || y < 0 || y >= 1) return;
+      const cell = grid?.cells[Math.floor(y * grid.height) * grid.width + Math.floor(x * grid.width)];
+      let text = failed ? 'Pixel readings unavailable.' : 'Loading pixel readings…';
+      if (grid) {
+        text = cell
+          ? `Observed: ${number.format(cell[0])} ${unit}\nBaseline: ${number.format(cell[1])} ${unit}\nChange: ${changeNumber.format(cell[2])} ${unit}\nUsable baseline nights: ${cell[3]}`
+          : 'No usable comparison at this location.';
+      }
+      popup.setLngLat(lngLat).setText(text).addTo(instance);
+    }
+    instance.on('click', inspect);
+    return () => { controller.abort(); instance.off('click', inspect); popup.remove(); };
+  }, [mapReady, record]);
+
+  const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index' : hasRaster ? `${record.name} pilot` : 'No observation at this time';
+  const emptyTitle = dataError ? 'Data index unavailable' : 'No satellite observation';
+  const emptyMessage = dataError
+    ? 'The observation index could not load.'
+    : observationArea
+      ? 'Use the Dallas pass marker to jump to the measured snapshot.'
+      : 'A processed snapshot is unavailable for this date.';
 
   return <>
     <header className="topbar">
@@ -125,35 +220,50 @@ function App() {
         <aside className="sidebar">
           <p className="eyebrow">01 / EXPLORE THE NIGHT</p>
           <h2>A little extra light.</h2>
-          <p className="small-copy">The glow will show light above a local baseline. It measures a change in brightness, not a count of celebrations.</p>
+          <p className="small-copy">Explore measured brightness changes relative to a local baseline. Step through the night to see when satellite readings are available.</p>
           <label className="field-label" id="year-label">DIWALI YEAR</label>
-          <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => setYear(value)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
+          <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => selectDate(value, offset)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
           <div className="event-row"><span>Festival date</span><strong>{formatDate(dates[year])}</strong></div>
           <label className="field-label" htmlFor="area">MAP VIEW</label>
-          <select id="area" value={area} onChange={event => setArea(event.target.value)}>{Object.keys(locations).map(name => <option key={name}>{name}</option>)}</select>
+          <select id="area" value={area} onChange={event => setArea(event.target.value)}>
+            <option value="Observation area">{observationArea?.name ?? 'Observation area'}</option>
+            {Object.keys(locations).map(name => <option key={name}>{name}</option>)}
+          </select>
           <div className="rule" />
           <span className="field-label">SATELLITE LAYER</span>
-          <div className="layer-label"><span className="light-dot" /> Excess nighttime light <span className="pill">DAILY</span></div>
-          <label className="opacity-label" htmlFor="opacity">Glow opacity <span>{opacity}%</span></label>
+          <div className="layer-label"><span className="light-dot" /> Brightness change <span className="pill">SATELLITE</span></div>
+          <label className="opacity-label" htmlFor="opacity">Layer opacity <span>{opacity}%</span></label>
           <input id="opacity" type="range" min="10" max="100" value={opacity} disabled={!hasRaster} onChange={event => setOpacity(Number(event.target.value))} />
-          <div className="layer-note">{hasRaster ? 'Showing quality-screened satellite observations.' : 'Glow controls activate when processed observations are available.'}</div>
-          <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong><p>{dataError ? 'The data index could not load. Reload to try again.' : year === 2025 ? 'Historical satellite observations have not been processed yet. No measured glow is displayed.' : 'This view will populate after satellite observations are published and processed.'}</p></div></div>
+          <div className="layer-note">{hasRaster ? 'Click a map cell for its reading and baseline.' : 'Layer opacity is available during a measured pass.'}</div>
+          <div className="status-card" aria-live={playing ? 'off' : 'polite'}><span className="status-dot" /><div><strong>{stateLabel}</strong>
+            {hasRaster && record.summary ? <>
+              <p>Mean {changeNumber.format(record.summary.mean)} · median {changeNumber.format(record.summary.median)} {unit}</p>
+              <p>{number.format(record.summary.count)} compared cells on the analysis grid</p>
+              <p><a href={record.granuleUrl} target="_blank" rel="noreferrer">NASA overpass record ↗</a></p>
+            </> : <p>{emptyMessage}</p>}
+          </div></div>
         </aside>
 
         <div className="map-column">
           <div className="map-stage">
-            <div ref={mapContainer} className="map" role="region" aria-label="Interactive United States basemap. No light anomalies are shown until observations are processed." />
+            <div ref={mapContainer} className="map" role="region" aria-label={hasRaster ? `${record.name} measured nighttime brightness change` : 'United States basemap'} />
             <div className="map-top"><span className="map-tag"><i /> NASA BLACK MARBLE</span><span className="map-date">{formatDate(date)}</span></div>
-            {!hasRaster && <div className="empty-map"><span className="empty-icon">✧</span><h3>{dataError ? 'Data index unavailable' : year === 2025 ? 'The experiment starts here.' : 'A new festival. A new observation.'}</h3><p>{dataError ? 'The basemap is available, but the observation index could not load.' : year === 2025 ? 'The map is ready. We’re waiting on the first processed satellite observations to test the theory.' : '2026 will appear here as satellite data becomes available. Explore the 2025 test in the meantime.'}</p><span>NO OBSERVATIONS DISPLAYED</span></div>}
+            {!hasRaster && <div className="empty-map"><span className="empty-icon">✧</span><h3>{emptyTitle}</h3><p>{emptyMessage}</p></div>}
             {mapError && <p className="map-error" role="status">Some map resources could not load. Check your internet connection and WebGL support.</p>}
-            <div className="map-legend"><span>EXCESS LIGHT</span><div className="legend-ramp" /><div className="legend-labels"><span>Lower</span><span>Higher</span></div><p>{hasRaster ? record.raster.legend : 'Scale will be set after baseline validation.'}</p></div>
+            {hasRaster && <div className="map-legend">
+              <span>CHANGE FROM BASELINE</span>
+              <div className="legend-ramp" style={{ background: `linear-gradient(90deg, ${record.raster.colors.join(', ')})` }} />
+              <div className="legend-labels"><span>≤ −{record.raster.limit}</span><span>0</span><span>≥ +{record.raster.limit}</span></div>
+              <p>{unit} · blue dimmer · gold brighter<br />Transparent areas lack a usable comparison.</p>
+            </div>}
           </div>
           <div className="timeline">
             <div className="timeline-heading"><div><span className="field-label">NIGHT TO EXPLORE</span><strong>{formatDate(date)}</strong></div><span className="relative-day">{Number(offset) === 0 ? 'Diwali reference date' : `${Math.abs(offset)} ${Math.abs(offset) === 1 ? 'day' : 'days'} ${offset < 0 ? 'before' : 'after'} Diwali`}</span></div>
-            <label className="sr-only" htmlFor="night">Days relative to Diwali</label><input id="night" type="range" min="-7" max="7" step="1" value={offset} onChange={event => setOffset(Number(event.target.value))} />
-            <div className="timeline-labels"><span>−7 DAYS</span><button onClick={() => setOffset(0)}>DIWALI <span>✧</span></button><span>+7 DAYS</span></div>
-            <p className="timeline-note">Dates are reference dates for now. Satellite overpasses will be aligned to local nights during data validation.</p>
+            <label className="sr-only" htmlFor="night">Days relative to Diwali</label><input id="night" type="range" min="-7" max="7" step="1" value={offset} onChange={event => selectDate(year, Number(event.target.value))} />
+            <div className="timeline-labels"><span>−7 DAYS</span><button onClick={() => selectDate(year, 0)}>DIWALI <span>✧</span></button><span>+7 DAYS</span></div>
+            <p className="timeline-note">{hasRaster ? `Local festival evening · UTC product date ${record.productDateUtc}` : 'Choose the festival date to explore its overnight timeline.'}</p>
           </div>
+          {frames.length > 0 && <OvernightPlayback frames={frames} index={activeFrame} playing={playing} onSelect={selectFrame} onPlay={togglePlayback} />}
         </div>
       </section>
 

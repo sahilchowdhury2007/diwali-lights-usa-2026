@@ -55,7 +55,13 @@ The [paired comparison](../earth-engine/04-dallas-paired-comparison.js) matches 
 
 The mean was lower on the event night in all four usable pairs. The positive October 7 median shows that the distribution of local changes differed from the overall mean. These are descriptive results for the Dallas pilot. Coverage differs by pair, and the comparison retains differences in overpass time and viewing geometry.
 
-The [Dallas export script](../earth-engine/05-export-dallas-pilot.js) prepares a GeoTIFF for the dashboard using the fixed-grid pilot baseline. Its four bands store the event radiance, baseline median, signed change, and usable control count. It encodes missing cells as `-9999` and uses Web Mercator for display. The web map should keep missing cells transparent and use the same signed color scale for comparable dates.
+The [Dallas export script](../earth-engine/05-export-dallas-pilot.js) prepares a GeoTIFF using the fixed-grid pilot baseline. Its four bands store event radiance, baseline median, signed change, and usable control count. The [converter](../scripts/prepare-dallas-pilot.py) derives the geographic corners from the Web Mercator export and keeps missing cells transparent. The map clips colors to ±5 nW/cm²/sr and shows the pixel value on click. Reprojection changes the number of display cells. The reported 22,340 comparisons refer to the original analysis grid.
+
+## Overnight playback
+
+The timeline uses New York City sunset and Los Angeles sunrise as clock anchors for each festival night. The 2025 anchors are October 20 at 6:08 p.m. EDT and October 21 at 7:03 a.m. PDT. The 2026 anchors are November 8 at 4:44 p.m. EST and November 9 at 6:20 a.m. PST. [U.S. Naval Observatory solar data](https://aa.usno.navy.mil/data/api#Complete_Sun_and_Moon_Data_for_One_Day)
+
+The Dallas image appears at the midpoint of the 08:24–08:30 UTC granule window. Other times have no published frame. The color shows change from a baseline of other nights. Detecting an on or off transition requires repeat readings of the same place within one night, aligned and screened for comparable conditions.
 
 After access works:
 
@@ -74,21 +80,7 @@ The base U.S. map includes separate views for the mainland, Alaska, and Hawaii; 
 
 ## Static data contract for initial UI
 
-`public/data/manifest.json` has years, event dates, processing states, and observations. The initial observation lists are empty. A future display record may contain:
-
-```json
-{
-  "date": "2025-10-21",
-  "status": "ready",
-  "raster": {
-    "url": "2025/validated-night.png",
-    "coordinates": [[-125, 50], [-66, 50], [-66, 24], [-125, 24]],
-    "legend": "A validated, fixed anomaly scale with explicit units"
-  }
-}
-```
-
-This is a structural example, not an existing observation. Corners are top-left, top-right, bottom-right, bottom-left. The date must follow the validated local-night convention, and the raster must be properly reprojected before display. Production exports should include numerical values, observation timing, QA, baseline counts, methodology version, and coverage alongside the display image so region inspection is reproducible. Raster display alone is not a completed scientific dashboard.
+`public/data/manifest.json` stores the local festival date, the sunset and sunrise anchors, and ready observations for each year. A ready observation specifies its UTC product date, overpass window, source record, analysis summary, and display raster. Corners are ordered top-left, top-right, bottom-right, bottom-left. The pixel data uses row-major order with event radiance, baseline median, signed change, and control count. Missing cells are null.
 
 ## Delivery sequence
 

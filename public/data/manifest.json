@@ -5,11 +5,64 @@
   "years": {
     "2025": {
       "eventDate": "2025-10-20",
-      "status": "not_processed",
-      "observations": []
+      "overnight": {
+        "sunset": "2025-10-20T22:08:00Z",
+        "sunrise": "2025-10-21T14:03:00Z"
+      },
+      "status": "pilot_ready",
+      "observations": [
+        {
+          "date": "2025-10-20",
+          "status": "ready",
+          "name": "Dallas–Fort Worth",
+          "productDateUtc": "2025-10-21",
+          "overpassStart": "2025-10-21T08:24:00Z",
+          "overpassEnd": "2025-10-21T08:30:00Z",
+          "granuleUrl": "https://cmr.earthdata.nasa.gov/search/concepts/G3825772898-LAADS.html",
+          "summary": {
+            "count": 22340,
+            "mean": -1.1411,
+            "median": -1.5363
+          },
+          "raster": {
+            "url": "2025/dallas-fort-worth-2025-10-20.png",
+            "pixelsUrl": "2025/dallas-fort-worth-2025-10-20-pixels.json",
+            "coordinates": [
+              [
+                -97.55254828,
+                33.10312428
+              ],
+              [
+                -96.5958425,
+                33.10312428
+              ],
+              [
+                -96.5958425,
+                32.54829484
+              ],
+              [
+                -97.55254828,
+                32.54829484
+              ]
+            ],
+            "colors": [
+              "#348ad0",
+              "#3b4657",
+              "#ffc56e"
+            ],
+            "limit": 5,
+            "validCells": 27163,
+            "inputSha256": "aa7caf439ec9cb4fa3da488ad1c81bafa047ac482208b09b2411544074ed5383"
+          }
+        }
+      ]
     },
     "2026": {
       "eventDate": "2026-11-08",
+      "overnight": {
+        "sunset": "2026-11-08T21:44:00Z",
+        "sunrise": "2026-11-09T14:20:00Z"
+      },
       "status": "awaiting_event",
       "observations": []
     }

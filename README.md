@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The dashboard includes 2025 and 2026 views, a date slider, and a U.S. basemap. The glow will represent **measured excess nighttime light**. The current map shows the basemap and date controls while the anomaly analysis is pending. The [2025 Bay Area coverage results](docs/methodology.md#first-diagnostic) are available in the methodology notes.
+The dashboard includes 2025 and 2026 views, a date slider, and sunset-to-sunrise playback on each festival date. The 2025 Dallas–Fort Worth snapshot shows measured brightness change from the control median. Click a map cell to see the event reading, baseline, change, and number of usable control nights. Playback shows gaps between measured passes. See the [coverage and Dallas results](docs/methodology.md#first-diagnostic).
 
 ## Run locally
 
@@ -30,6 +30,17 @@ Regenerate the tracked basemap geometry after changing the U.S. Atlas dependency
 
 1. Sign in at https://code.earthengine.google.com/ with an account that has access to the registered Cloud project `diwali-lights-usa`. Select that project from the account menu in the Code Editor.
 2. Run `earth-engine/01-check-coverage.js` in the Code Editor. It inspects daily image availability and usable pixel counts in a small test region. The optional CSV export must be started separately from the Tasks panel.
+
+## Rebuild the Dallas overlay
+
+Run [the export script](earth-engine/05-export-dallas-pilot.js) in Earth Engine and download the GeoTIFF. Convert it to the dashboard's PNG overlay and pixel data with Python.
+
+```powershell
+python -m pip install rasterio numpy Pillow
+python scripts/prepare-dallas-pilot.py "path-to-export.tiff"
+```
+
+The converter reads the export's projection and bounds, validates the bands, and records the input SHA-256. It writes the display assets to `public/data/2025` and updates the manifest. The original GeoTIFF can be kept in the ignored `data/raw` directory.
 
 ## GitHub Pages
 
