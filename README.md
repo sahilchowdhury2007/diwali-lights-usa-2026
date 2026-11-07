@@ -2,13 +2,11 @@
 
 An open experiment: can unusual nighttime brightness around Diwali be detected in the United States? Use 2025 to test feasibility, then repeat the same analysis for 2026.
 
+[Open the dashboard](https://sahilchowdhury2007.github.io/diwali-lights-usa-2026/) · [Check deployments](https://github.com/sahilchowdhury2007/diwali-lights-usa-2026/actions/workflows/pages.yml)
+
 ## Current state
 
-The initial React + MapLibre dashboard is scaffolded, with 2025/2026 selection, a reference-date slider, mainland/Alaska/Hawaii views, a methodology panel, and a GitHub Pages deployment workflow. **No satellite observations have been processed, no anomaly results are displayed, and the website is not deployed yet.** Blank data states do not mean zero extra light.
-
-Initial validation: production build passed; the local dashboard rendered in the browser; switching to 2026 showed the pending-data state; moving the date slider to +1 updated the date to November 9, 2026. The bundled U.S. basemap was visually checked. The Earth Engine script passed JavaScript syntax checking but has not been executed against Earth Engine yet.
-
-The user-approved glow metric is **measured excess nighttime light**, not an inferred number of celebrants. Electricity demand is a possible supporting layer at grid-region resolution. Population or demographic distributions will not be used to fabricate light hotspots.
+The dashboard includes 2025 and 2026 views, a date slider, and a U.S. basemap. The glow will represent **measured excess nighttime light**. The current map shows the basemap and date controls while the anomaly analysis is pending. The [2025 Bay Area coverage results](docs/methodology.md#first-diagnostic) are available in the methodology notes.
 
 ## Run locally
 
@@ -28,17 +26,14 @@ The app is static. It reads `public/data/manifest.json`; no API credentials belo
 
 Regenerate the tracked basemap geometry after changing the U.S. Atlas dependency with `node scripts/prepare-geography.mjs`. Its license is included alongside the geometry.
 
-## Your next setup steps
+## Run the coverage check
 
 1. Sign in at https://code.earthengine.google.com/ with an account that has access to the registered Cloud project `diwali-lights-usa`. Select that project from the account menu in the Code Editor.
 2. Run `earth-engine/01-check-coverage.js` in the Code Editor. It inspects daily image availability and usable pixel counts in a small test region. The optional CSV export must be started separately from the Tasks panel.
-3. Use the GitHub integration to publish directly, or create an empty public repository named `diwali-lights-usa-2026` under `sahilchowdhury2007`. The display title is “Diwali Lights USA 2026”.
-
-Expected address after repository creation, push, Pages configuration, and deployment: `https://sahilchowdhury2007.github.io/diwali-lights-usa-2026/`. This is a planned URL, not a verified live website.
 
 ## GitHub Pages
 
-In repository Settings → Pages, select **GitHub Actions** as the build and deployment source. The checked-in workflow builds `dist` and deploys on pushes to `main` or `master`, or by manual workflow dispatch. The relative Vite base supports repository subpaths.
+The repository uses **GitHub Actions** as its Pages source. The [deployment workflow](.github/workflows/pages.yml) installs dependencies from the lockfile, builds `dist`, and deploys on pushes to `main`. You can also run **Publish dashboard** from the Actions tab. If you fork the project, select **GitHub Actions** in **Settings → Pages** before running the workflow.
 
 Earth Engine processing runs outside the public site. Later, a separately configured data workflow can generate and publish static exports. No scheduled data ingestion or credentials are configured yet. The current Pages workflow only builds and publishes the frontend.
 
