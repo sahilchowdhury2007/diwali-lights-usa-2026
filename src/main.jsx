@@ -12,12 +12,14 @@ const dates = { 2025: '2025-10-20', 2026: '2026-11-08' };
 const usOverview = 'us-overview';
 const locations = {
   'United States': [[-125, 24], [-66, 50]],
-  'Alaska': [[-170, 51], [-130, 72]],
-  'Hawaii': [[-161, 18], [-154, 23]],
+  'Alaska': [[-180, 51], [-129, 72]],
+  'Western Aleutians': [[172, 51], [180, 56]],
+  'Hawaii': [[-179, 18], [-154, 29]],
 };
 const unit = 'nW/cm²/sr';
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
 const changeNumber = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2, signDisplay: 'exceptZero' });
+const percent = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 });
 
 function dataUrl(path) {
   return new URL(path, new URL(`${base}data/`, window.location.href)).href;
@@ -46,6 +48,7 @@ function App() {
   const [mapReady, setMapReady] = useState(false);
   const [area, setArea] = useState('Observation area');
   const [observationName, setObservationName] = useState('');
+  const [satelliteLayer, setSatelliteLayer] = useState('change');
   const [opacity, setOpacity] = useState(85);
   const [showMethod, setShowMethod] = useState(false);
   const mapContainer = useRef(null);
@@ -54,11 +57,19 @@ function App() {
   const observations = useMemo(() => manifest?.years?.[year]?.observations?.filter(
     item => item.date === date && item.status === 'ready' && item.raster?.url,
   ) ?? [], [manifest, year, date]);
-  const showOverview = year === 2025 && observationName === usOverview;
-  const record = observations.find(item => item.name === observationName) ?? observations[0];
-  const displayed = useMemo(() => showOverview ? observations : record ? [record] : [],
-    [showOverview, observations, record]);
+  const national = manifest?.years?.[year]?.national;
+  const nationalForDate = national?.date === date ? national : null;
+  const city = observations.find(item => item.name === observationName);
+  const hasUsOption = Boolean(nationalForDate || (year === 2025 && observations.length));
+  const showOverview = hasUsOption && (observationName === usOverview || Boolean(nationalForDate && !city));
+  const nationalView = showOverview ? nationalForDate : null;
+  const coverageMode = Boolean(nationalView && satelliteLayer === 'coverage');
+  const record = city ?? observations[0];
+  const displayed = useMemo(() => nationalView?.tiles ?? (showOverview ? observations : record ? [record] : []),
+    [nationalView, showOverview, observations, record]);
   const hasRaster = displayed.length > 0;
+  const legend = displayed[0]?.raster;
+  const mapArea = showOverview && area === 'Observation area' ? 'United States' : area;
   const baselineLabel = baselineName(record);
   const selectObservation = useCallback(name => {
     setObservationName(name);
@@ -113,22 +124,22 @@ function App() {
   useEffect(() => {
     if (!map.current || !mapReady) return;
     const coordinates = showOverview ? null : record?.raster?.coordinates;
-    const bounds = area === 'Observation area' && coordinates
+    const bounds = mapArea === 'Observation area' && coordinates
       ? [coordinates[3], coordinates[1]]
-      : locations[area] ?? locations['United States'];
+      : locations[mapArea] ?? locations['United States'];
     map.current.fitBounds(bounds, { padding: 42, duration: 700 });
-  }, [area, record, mapReady, showOverview]);
+  }, [mapArea, record, mapReady, showOverview]);
 
   useEffect(() => {
     const instance = map.current;
     if (!instance || !mapReady) return;
     const layers = displayed.map(({ raster }, index) => {
       const id = `excess-light-${index}`;
-      instance.addSource(id, { type: 'image', url: dataUrl(raster.url), coordinates: raster.coordinates });
-      instance.addLayer({ id, type: 'raster', source: id, paint: { 'raster-fade-duration': 0, 'raster-resampling': 'nearest' } });
+      instance.addSource(id, { type: 'image', url: dataUrl(coverageMode ? raster.coverageUrl : raster.url), coordinates: raster.coordinates });
+      instance.addLayer({ id, type: 'raster', source: id, paint: { 'raster-fade-duration': 0, 'raster-resampling': 'nearest' } }, 'state-borders');
       return id;
     });
-    const markers = showOverview ? displayed.map(({ name, raster }) => {
+    const markers = showOverview ? observations.map(({ name, raster }) => {
       const [west, north] = raster.coordinates[0];
       const [east, south] = raster.coordinates[2];
       const button = document.createElement('button');
@@ -151,12 +162,12 @@ function App() {
         instance.removeSource(id);
       });
     };
-  }, [displayed, mapReady, selectObservation, showOverview]);
+  }, [coverageMode, displayed, mapReady, observations, selectObservation, showOverview]);
 
   useEffect(() => {
     if (!mapReady || !map.current) return;
     displayed.forEach((_, index) => map.current.setPaintProperty(`excess-light-${index}`, 'raster-opacity', opacity / 100));
-  }, [displayed, opacity, mapReady]);
+  }, [coverageMode, displayed, opacity, mapReady]);
 
   useEffect(() => {
     const instance = map.current;
@@ -170,40 +181,54 @@ function App() {
         topLeft: maplibre.MercatorCoordinate.fromLngLat(raster.coordinates[0]),
         bottomRight: maplibre.MercatorCoordinate.fromLngLat(raster.coordinates[2]),
       };
-      fetch(dataUrl(raster.pixelsUrl), { signal: controller.signal })
-        .then(response => { if (!response.ok) throw new Error('Pixel readings unavailable'); return response.json(); })
-        .then(data => { reading.grid = data; })
-        .catch(error => { if (error.name !== 'AbortError') reading.failed = true; });
       return reading;
     });
-    function inspect({ lngLat }) {
+    let clickId = 0;
+    async function inspect({ lngLat }) {
+      const currentClick = ++clickId;
       const point = maplibre.MercatorCoordinate.fromLngLat(lngLat);
       const reading = readings.find(({ topLeft, bottomRight }) =>
         point.x >= topLeft.x && point.x < bottomRight.x && point.y >= topLeft.y && point.y < bottomRight.y);
       if (!reading) return;
-      const { topLeft, bottomRight, grid, failed, item } = reading;
+      const { topLeft, bottomRight, item } = reading;
+      popup.setLngLat(lngLat).setText('Loading pixel readings…').addTo(instance);
+      reading.grid ??= fetch(dataUrl(item.raster.pixelsUrl), { signal: controller.signal })
+        .then(response => { if (!response.ok) throw new Error('Pixel readings unavailable'); return response.json(); })
+        .catch(() => null);
+      const grid = await reading.grid;
+      if (controller.signal.aborted || currentClick !== clickId || !popup.isOpen()) return;
+      if (!grid) {
+        reading.grid = null;
+        popup.setText('Pixel readings unavailable.');
+        return;
+      }
       const x = (point.x - topLeft.x) / (bottomRight.x - topLeft.x);
       const y = (point.y - topLeft.y) / (bottomRight.y - topLeft.y);
-      const cell = grid?.cells[Math.floor(y * grid.height) * grid.width + Math.floor(x * grid.width)];
-      let text = failed ? 'Pixel readings unavailable.' : 'Loading pixel readings…';
-      if (grid) {
+      const cell = grid.cells[Math.floor(y * grid.height) * grid.width + Math.floor(x * grid.width)];
+      let text = 'No usable comparison at this location.';
+      if (nationalView && cell) {
+        text = `Matched coverage: ${percent.format(cell[1])}`;
+        if (cell[0] !== null) text += `\nMean change: ${changeNumber.format(cell[0])} ${unit}`;
+        else text += `\nBrightness display requires ${percent.format(nationalView.minCoverage)} coverage.`;
+      } else if (!nationalView) {
         text = cell
           ? `Observed: ${number.format(cell[0])} ${unit}\n${baselineName(item)}: ${number.format(cell[1])} ${unit}\nChange: ${changeNumber.format(cell[2])} ${unit}\nUsable baseline nights: ${cell[3]}`
           : 'No usable comparison at this location.';
       }
-      popup.setLngLat(lngLat).setText(showOverview ? `${item.name}\n${text}` : text).addTo(instance);
+      popup.setText(showOverview ? `${item.name}\n${text}` : text);
     }
     instance.on('click', inspect);
     return () => { controller.abort(); instance.off('click', inspect); popup.remove(); };
-  }, [mapReady, displayed, showOverview]);
+  }, [mapReady, displayed, nationalView, showOverview]);
 
   const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index'
-    : hasRaster && showOverview ? 'United States coverage' : hasRaster ? `${record.name} pilot` : 'No processed observation';
+    : nationalView ? `United States · ${nationalView.satellite}`
+      : hasRaster && showOverview ? 'United States coverage' : hasRaster ? `${record.name} pilot` : 'No processed observation';
   const emptyTitle = dataError ? 'Data index unavailable' : 'No satellite observation';
   const emptyMessage = dataError
     ? 'The observation index could not load.'
     : year === 2025
-      ? 'Select Diwali to view the October 20 metro observations.'
+      ? 'Select Diwali to view the October 20 observations.'
       : 'Satellite observations for this date are pending.';
 
   return <>
@@ -222,31 +247,43 @@ function App() {
         <aside className="sidebar">
           <p className="eyebrow">01 / EXPLORE THE NIGHT</p>
           <h2>A little extra light.</h2>
-          <p className="small-copy">Explore measured nighttime brightness in Dallas–Fort Worth and Los Angeles, each compared with its own local baseline.</p>
+          <p className="small-copy">Explore the U.S. satellite comparison and zoom in on the Dallas–Fort Worth and Los Angeles pilots.</p>
           <label className="field-label" id="year-label">DIWALI YEAR</label>
           <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => setYear(value)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
           <div className="event-row"><span>Festival date</span><strong>{formatDate(dates[year])}</strong></div>
-          {(observations.length > 1 || (year === 2025 && observations.length > 0)) && <div className="observation-picker">
+          {(hasUsOption || observations.length > 1) && <div className="observation-picker">
             <label className="field-label" htmlFor="observation">OBSERVATION</label>
             <select id="observation" value={showOverview ? usOverview : record.name}
               onChange={event => selectObservation(event.target.value)}>
-              {year === 2025 && <option value={usOverview}>United States</option>}
+              {hasUsOption && <option value={usOverview}>United States</option>}
               {observations.map(item => <option key={item.name}>{item.name}</option>)}
             </select>
           </div>}
           <label className="field-label" htmlFor="area">MAP VIEW</label>
-          <select id="area" value={area} onChange={event => setArea(event.target.value)}>
-            <option value="Observation area">{showOverview ? 'Observation area' : record?.name ?? 'Observation area'}</option>
+          <select id="area" value={mapArea} onChange={event => setArea(event.target.value)}>
+            {!showOverview && <option value="Observation area">{record?.name ?? 'Observation area'}</option>}
             {Object.keys(locations).map(name => <option key={name}>{name}</option>)}
           </select>
           <div className="rule" />
-          <span className="field-label">SATELLITE LAYER</span>
-          <div className="layer-label"><span className="light-dot" /> Brightness change <span className="pill">SATELLITE</span></div>
+          {nationalView ? <div className="layer-picker">
+            <label className="field-label" htmlFor="satellite-layer">SATELLITE LAYER</label>
+            <select id="satellite-layer" value={satelliteLayer} onChange={event => setSatelliteLayer(event.target.value)}>
+              <option value="change">Brightness change</option>
+              <option value="coverage">Matched coverage</option>
+            </select>
+          </div> : <>
+            <span className="field-label">SATELLITE LAYER</span>
+            <div className="layer-label"><span className="light-dot" /> Brightness change <span className="pill">SATELLITE</span></div>
+          </>}
           <label className="opacity-label" htmlFor="opacity">Layer opacity <span>{opacity}%</span></label>
           <input id="opacity" type="range" min="10" max="100" value={opacity} disabled={!hasRaster} onChange={event => setOpacity(Number(event.target.value))} />
-          <div className="layer-note">{hasRaster ? 'Click a map cell for its reading and baseline.' : 'Layer opacity is available for processed observations.'}</div>
+          <div className="layer-note">{nationalView ? 'Click a cell to see its coverage and brightness change.' : hasRaster ? 'Click a map cell for its reading and baseline.' : 'Layer opacity is available for processed observations.'}</div>
           <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
-            {showOverview && hasRaster ? <>
+            {nationalView ? <>
+              <p>Event brightness compared with the median of at least three ordinary nights.</p>
+              <p>Brightness is shown where at least {percent.format(nationalView.minCoverage)} of a cell has matched coverage.</p>
+              <p>Use Map View to explore Alaska, Hawaii, and the Western Aleutians.</p>
+            </> : showOverview && hasRaster ? <>
               <p>{observations.map(item => item.name).join(' and ')} have published comparisons. Each uses its own baseline.</p>
               <p>Select a city marker to zoom to its readings.</p>
             </> : hasRaster && record.summary ? <>
@@ -262,22 +299,27 @@ function App() {
 
         <div className="map-column">
           <div className="map-stage">
-            <div ref={mapContainer} className="map" role="region" aria-label={hasRaster ? `${showOverview ? 'United States' : record.name} measured nighttime brightness change` : 'United States basemap'} />
+            <div ref={mapContainer} className="map" role="region" aria-label={coverageMode ? 'United States matched satellite coverage' : hasRaster ? `${showOverview ? 'United States' : record.name} measured nighttime brightness change` : 'United States basemap'} />
             <div className="map-top"><span className="map-tag"><i /> NASA BLACK MARBLE</span><span className="map-date">{formatDate(date)}</span></div>
             {!hasRaster && <div className="empty-map"><span className="empty-icon">✧</span><h3>{emptyTitle}</h3><p>{emptyMessage}</p></div>}
             {mapError && <p className="map-error" role="status">Some map resources could not load. Check your internet connection and WebGL support.</p>}
-            {hasRaster && <div className="map-legend">
+            {coverageMode ? <div className="map-legend">
+              <span>MATCHED COVERAGE</span>
+              <div className="legend-ramp" style={{ background: `linear-gradient(90deg, ${nationalView.coverageColors.join(', ')})` }} />
+              <div className="legend-labels"><span>0%</span><span>100%</span></div>
+              <p>Share of each cell with usable event and baseline readings.</p>
+            </div> : hasRaster && <div className="map-legend">
               <span>CHANGE FROM BASELINE</span>
-              <div className="legend-ramp" style={{ background: `linear-gradient(90deg, ${record.raster.colors.join(', ')})` }} />
-              <div className="legend-labels"><span>≤ −{record.raster.limit}</span><span>0</span><span>≥ +{record.raster.limit}</span></div>
-              <p>{unit} · blue dimmer · gold brighter<br />Transparent areas lack a usable comparison.</p>
+              <div className="legend-ramp" style={{ background: `linear-gradient(90deg, ${legend.colors.join(', ')})` }} />
+              <div className="legend-labels"><span>≤ −{legend.limit}</span><span>0</span><span>≥ +{legend.limit}</span></div>
+              <p>{unit} · blue dimmer · gold brighter<br />{nationalView ? `Shown at ${percent.format(nationalView.minCoverage)} coverage or higher.` : 'Transparent areas lack a usable comparison.'}</p>
             </div>}
           </div>
           <div className="timeline">
             <div className="timeline-heading"><div><span className="field-label">NIGHT TO EXPLORE</span><strong>{formatDate(date)}</strong></div><span className="relative-day">{Number(offset) === 0 ? 'Diwali reference date' : `${Math.abs(offset)} ${Math.abs(offset) === 1 ? 'day' : 'days'} ${offset < 0 ? 'before' : 'after'} Diwali`}</span></div>
             <label className="sr-only" htmlFor="night">Days relative to Diwali</label><input id="night" type="range" min="-7" max="7" step="1" value={offset} onChange={event => setOffset(Number(event.target.value))} />
             <div className="timeline-labels"><span>−7 DAYS</span><button onClick={() => setOffset(0)}>DIWALI <span>✧</span></button><span>+7 DAYS</span></div>
-            {hasRaster && <p className="timeline-note">Local festival evening · UTC product date {record.productDateUtc}</p>}
+            {hasRaster && <p className="timeline-note">{nationalView ? 'NOAA-20 daily product' : 'Local festival evening'} · UTC product date {(nationalView ?? record).productDateUtc}</p>}
           </div>
         </div>
       </section>

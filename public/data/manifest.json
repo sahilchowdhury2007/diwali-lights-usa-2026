@@ -98,7 +98,159 @@
             "inputSha256": "fe1c6fb1a4764ab19d98814932925dad364912d998b553f8ad5e59b7b1531de6"
           }
         }
-      ]
+      ],
+      "national": {
+        "date": "2025-10-20",
+        "productDateUtc": "2025-10-21",
+        "satellite": "NOAA-20",
+        "minCoverage": 0.25,
+        "coverageColors": [
+          "#4a3b53",
+          "#65d9bc"
+        ],
+        "tiles": [
+          {
+            "name": "Lower 48",
+            "raster": {
+              "url": "2025/us-lower48.png",
+              "coverageUrl": "2025/us-lower48-coverage.png",
+              "pixelsUrl": "2025/us-lower48-pixels.json",
+              "coordinates": [
+                [
+                  -125,
+                  50
+                ],
+                [
+                  -66,
+                  50
+                ],
+                [
+                  -66,
+                  24
+                ],
+                [
+                  -125,
+                  24
+                ]
+              ],
+              "colors": [
+                "#348ad0",
+                "#3b4657",
+                "#ffc56e"
+              ],
+              "limit": 5,
+              "inputSha256": "6759a00f5b38cbac855a8d56191c697fc2332c286514b2776a3a0f1d0a7f0d44"
+            },
+            "matchedCells": 190858,
+            "displayedCells": 139171
+          },
+          {
+            "name": "Alaska",
+            "raster": {
+              "url": "2025/us-alaska_west_longitude.png",
+              "coverageUrl": "2025/us-alaska_west_longitude-coverage.png",
+              "pixelsUrl": "2025/us-alaska_west_longitude-pixels.json",
+              "coordinates": [
+                [
+                  -180,
+                  72
+                ],
+                [
+                  -129,
+                  72
+                ],
+                [
+                  -129,
+                  51
+                ],
+                [
+                  -180,
+                  51
+                ]
+              ],
+              "colors": [
+                "#348ad0",
+                "#3b4657",
+                "#ffc56e"
+              ],
+              "limit": 5,
+              "inputSha256": "443585d4b325d76ecfbe3d1cf03d92c735fc92e65e4ffee4cfbeef6fa6499cbd"
+            },
+            "matchedCells": 13050,
+            "displayedCells": 4304
+          },
+          {
+            "name": "Western Aleutians",
+            "raster": {
+              "url": "2025/us-alaska_east_longitude.png",
+              "coverageUrl": "2025/us-alaska_east_longitude-coverage.png",
+              "pixelsUrl": "2025/us-alaska_east_longitude-pixels.json",
+              "coordinates": [
+                [
+                  172,
+                  56
+                ],
+                [
+                  180,
+                  56
+                ],
+                [
+                  180,
+                  51
+                ],
+                [
+                  172,
+                  51
+                ]
+              ],
+              "colors": [
+                "#348ad0",
+                "#3b4657",
+                "#ffc56e"
+              ],
+              "limit": 5,
+              "inputSha256": "13cd7ed3e4e436738909317644f0f17191e91b200c740be46cda0df89cdf0a9a"
+            },
+            "matchedCells": 0,
+            "displayedCells": 0
+          },
+          {
+            "name": "Hawaii",
+            "raster": {
+              "url": "2025/us-hawaii.png",
+              "coverageUrl": "2025/us-hawaii-coverage.png",
+              "pixelsUrl": "2025/us-hawaii-pixels.json",
+              "coordinates": [
+                [
+                  -179,
+                  29
+                ],
+                [
+                  -154,
+                  29
+                ],
+                [
+                  -154,
+                  18
+                ],
+                [
+                  -179,
+                  18
+                ]
+              ],
+              "colors": [
+                "#348ad0",
+                "#3b4657",
+                "#ffc56e"
+              ],
+              "limit": 5,
+              "inputSha256": "6dd02dbb725048befd8b739527694275beebbd966448d7e4353a1c69727a52ed"
+            },
+            "matchedCells": 901,
+            "displayedCells": 566
+          }
+        ]
+      }
     },
     "2026": {
       "eventDate": "2026-11-08",

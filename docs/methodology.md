@@ -135,6 +135,8 @@ The [NOAA-20 national screen](../earth-engine/09-screen-united-states.js) found 
 
 DC had six matches among seven sampled locations. West Virginia had usable event readings at nearly all sampled locations, but few met the control requirement. For the national map, the regional GeoTIFFs preserve both signed brightness change and the fraction of each cell with matched coverage so that areas with sparse observations remain distinguishable.
 
+The four exports contain 204,809 source cells with some matched coverage. The national brightness map shows the 144,041 cells that reach the 25% coverage threshold, including 139,171 in the lower 48, 4,304 in Alaska, and 566 in Hawaii. The tile on the positive-longitude side of the Alaska antimeridian contains mapped cells at 0% matched coverage. The source-cell totals are distinct from the state screen, which samples grid centers instead of aggregating the underlying pixels. The dashboard uses nearest-neighbor resampling for the Web Mercator display and keeps the ±5 nW/cm²/sr color range.
+
 ### Remaining checks
 
 1. Select several test regions and comparison regions before inspecting anomaly maps. Include regions with differing urban brightness, weather, and geography; avoid selecting only apparent hotspots.
@@ -148,7 +150,7 @@ DC had six matches among seven sampled locations. West Virginia had usable event
 
 Render geographically referenced raster exports. A glow may be a display treatment for a validated positive radiance anomaly, but it must preserve the underlying scale and missing-data mask. Excess light is not the number of celebrations. Avoid independently normalizing each year or date to its own maximum. Keep no-observation, insufficient-baseline, no-positive-excess, and not-yet-published states distinct in the eventual layer and hover inspection.
 
-The base U.S. map includes separate views for the mainland, Alaska, and Hawaii; nationwide data coverage is not claimed yet. Mainland-only processing must be labeled if that is the first available export.
+The base U.S. map includes views for the lower 48, Alaska, Hawaii, and the Western Aleutians. The national layer uses a common NOAA-20 control-median baseline. The city pilots retain their original baselines.
 
 ## Static data contract for initial UI
 

@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The dashboard includes 2025 and 2026 views and a date slider. Select **United States** under **Observation** on the 2025 festival date to see the published areas together. Dallas–Fort Worth uses its control median and Los Angeles uses its brightest control at each pixel. Click a city marker to open its observation or a map cell to inspect the reading. See the [2025 results](docs/methodology.md#2025-metro-brightness-results).
+The dashboard includes 2025 and 2026 views and a date slider. Select **United States** under **Observation** on the 2025 festival date for the national NOAA-20 comparison. Switch between **Brightness change** and **Matched coverage**, or use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. The city markers open the Dallas–Fort Worth and Los Angeles pilots, which use separate baselines. Click a map cell to inspect the data. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
 
 ## Run locally
 
@@ -38,6 +38,8 @@ Regenerate the tracked basemap geometry after changing the U.S. Atlas dependency
 Run the [national coverage script](earth-engine/09-screen-united-states.js) with `YEAR = 2025`. It reports coverage in all 50 states and DC as a percentage of samples on a 0.05° geographic grid. The map previews signed NOAA-20 radiance changes at its current zoom level. A matched sample has a usable event reading and at least three usable control nights.
 
 Set `CREATE_EXPORTS = true` to create four GeoTIFF tasks for the lower 48, Hawaii, and both sides of Alaska's antimeridian. Each export contains the mean change over matched observations and the fraction of each 0.05° cell that had matched coverage within state boundaries. Those fractions can mask low coverage when building the dashboard layer. Start the batch exports from the Tasks panel.
+
+With the four GeoTIFFs in one directory, run `python scripts/prepare-national.py --year 2025 "path-to-export-directory"` using the dependencies below. The converter verifies the two data bands and shared grid, then generates both map layers and the pixel readings. The brightness layer shows cells with at least 25% matched coverage. The coverage layer includes cells at 0%.
 
 ## Rebuild the metro overlays
 
