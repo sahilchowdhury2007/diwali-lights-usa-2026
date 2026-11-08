@@ -55,7 +55,7 @@ function App() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`${base}data/manifest.json`, { signal: controller.signal })
+    fetch(`${base}data/manifest.json?v=${__MANIFEST_REVISION__}`, { signal: controller.signal })
       .then(response => { if (!response.ok) throw new Error('Manifest unavailable'); return response.json(); })
       .then(setManifest)
       .catch(error => { if (error.name !== 'AbortError') setDataError(true); });
