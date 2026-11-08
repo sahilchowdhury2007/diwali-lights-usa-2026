@@ -104,6 +104,7 @@
         "productDateUtc": "2025-10-21",
         "satellite": "NOAA-20",
         "minCoverage": 0.25,
+        "strongChangeMin": 0.5,
         "coverageColors": [
           "#4a3b53",
           "#65d9bc"
@@ -113,6 +114,7 @@
             "name": "Lower 48",
             "raster": {
               "url": "2025/us-lower48.png",
+              "strongChangeUrl": "2025/us-lower48-strong.png",
               "coverageUrl": "2025/us-lower48-coverage.png",
               "pixelsUrl": "2025/us-lower48-pixels.json",
               "coordinates": [
@@ -143,12 +145,14 @@
             },
             "matchedCells": 190858,
             "eligibleCells": 139171,
-            "displayedCells": 78737
+            "displayedCells": 78737,
+            "strongChangeCells": 9490
           },
           {
             "name": "Alaska",
             "raster": {
               "url": "2025/us-alaska_west_longitude.png",
+              "strongChangeUrl": "2025/us-alaska_west_longitude-strong.png",
               "coverageUrl": "2025/us-alaska_west_longitude-coverage.png",
               "pixelsUrl": "2025/us-alaska_west_longitude-pixels.json",
               "coordinates": [
@@ -179,12 +183,14 @@
             },
             "matchedCells": 13050,
             "eligibleCells": 4304,
-            "displayedCells": 213
+            "displayedCells": 213,
+            "strongChangeCells": 20
           },
           {
             "name": "Western Aleutians",
             "raster": {
               "url": "2025/us-alaska_east_longitude.png",
+              "strongChangeUrl": "2025/us-alaska_east_longitude-strong.png",
               "coverageUrl": "2025/us-alaska_east_longitude-coverage.png",
               "pixelsUrl": "2025/us-alaska_east_longitude-pixels.json",
               "coordinates": [
@@ -215,12 +221,14 @@
             },
             "matchedCells": 0,
             "eligibleCells": 0,
-            "displayedCells": 0
+            "displayedCells": 0,
+            "strongChangeCells": 0
           },
           {
             "name": "Hawaii",
             "raster": {
               "url": "2025/us-hawaii.png",
+              "strongChangeUrl": "2025/us-hawaii-strong.png",
               "coverageUrl": "2025/us-hawaii-coverage.png",
               "pixelsUrl": "2025/us-hawaii-pixels.json",
               "coordinates": [
@@ -251,7 +259,8 @@
             },
             "matchedCells": 901,
             "eligibleCells": 566,
-            "displayedCells": 356
+            "displayedCells": 356,
+            "strongChangeCells": 6
           }
         ]
       }

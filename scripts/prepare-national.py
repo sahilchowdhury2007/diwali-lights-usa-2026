@@ -25,6 +25,7 @@ CHANGE_COLORS = ["#7d5636", "#d4924c", "#ffdda2"]
 COVERAGE_COLORS = ["#4a3b53", "#65d9bc"]
 CHANGE_LIMIT = 5
 MIN_COVERAGE = 0.25
+STRONG_CHANGE_MIN = 0.5
 
 
 def read_tile(path, bounds):
@@ -80,7 +81,10 @@ def prepare_tile(path, name, bounds, asset, bands, source_transform):
     known = np.isfinite(coverage)
     DATA.joinpath(asset).parent.mkdir(parents=True, exist_ok=True)
     change_url, coverage_url, pixels_url = f"{asset}.png", f"{asset}-coverage.png", f"{asset}-pixels.json"
+    strong_change_url = f"{asset}-strong.png"
     save_layer(DATA / change_url, change, visible, [0, CHANGE_LIMIT / 2, CHANGE_LIMIT], CHANGE_COLORS)
+    save_layer(DATA / strong_change_url, change, eligible & (change > STRONG_CHANGE_MIN),
+               [0, CHANGE_LIMIT / 2, CHANGE_LIMIT], CHANGE_COLORS)
     save_layer(DATA / coverage_url, coverage, known, [0, 1], COVERAGE_COLORS)
     cells = [None] * coverage.size
     for index in np.flatnonzero(known):
@@ -95,6 +99,7 @@ def prepare_tile(path, name, bounds, asset, bands, source_transform):
         "name": name,
         "raster": {
             "url": change_url,
+            "strongChangeUrl": strong_change_url,
             "coverageUrl": coverage_url,
             "pixelsUrl": pixels_url,
             "coordinates": [[west, north], [east, north], [east, south], [west, south]],
@@ -105,6 +110,7 @@ def prepare_tile(path, name, bounds, asset, bands, source_transform):
         "matchedCells": int(np.isfinite(bands[0]).sum()),
         "eligibleCells": int((bands[1] >= MIN_COVERAGE).sum()),
         "displayedCells": int(((bands[0] > 0) & (bands[1] >= MIN_COVERAGE)).sum()),
+        "strongChangeCells": int(((bands[0] > STRONG_CHANGE_MIN) & (bands[1] >= MIN_COVERAGE)).sum()),
     }
 
 
@@ -129,6 +135,7 @@ def main():
         "productDateUtc": product_date,
         "satellite": "NOAA-20",
         "minCoverage": MIN_COVERAGE,
+        "strongChangeMin": STRONG_CHANGE_MIN,
         "coverageColors": COVERAGE_COLORS,
         "tiles": tiles,
     }

@@ -66,6 +66,8 @@ function App() {
   const showOverview = hasUsOption && (observationName === usOverview || Boolean(nationalForDate && !city));
   const nationalView = showOverview ? nationalForDate : null;
   const coverageMode = Boolean(nationalView && satelliteLayer === 'coverage');
+  const strongMode = nationalView?.strongChangeMin != null && satelliteLayer === 'strong';
+  const layerUrlKey = coverageMode ? 'coverageUrl' : strongMode ? 'strongChangeUrl' : 'url';
   const record = city ?? observations[0];
   const displayed = useMemo(() => nationalView?.tiles ?? (showOverview ? observations : record ? [record] : []),
     [nationalView, showOverview, observations, record]);
@@ -137,7 +139,7 @@ function App() {
     if (!instance || !mapReady) return;
     const layers = displayed.map(({ raster }, index) => {
       const id = `excess-light-${index}`;
-      instance.addSource(id, { type: 'image', url: dataUrl(coverageMode ? raster.coverageUrl : raster.url), coordinates: raster.coordinates });
+      instance.addSource(id, { type: 'image', url: dataUrl(raster[layerUrlKey]), coordinates: raster.coordinates });
       instance.addLayer({ id, type: 'raster', source: id, paint: { 'raster-fade-duration': 0, 'raster-resampling': 'nearest' } }, 'state-borders');
       return id;
     });
@@ -164,12 +166,12 @@ function App() {
         instance.removeSource(id);
       });
     };
-  }, [coverageMode, displayed, mapReady, observations, selectObservation, showOverview]);
+  }, [layerUrlKey, displayed, mapReady, observations, selectObservation, showOverview]);
 
   useEffect(() => {
     if (!mapReady || !map.current) return;
     displayed.forEach((_, index) => map.current.setPaintProperty(`excess-light-${index}`, 'raster-opacity', opacity / 100));
-  }, [coverageMode, displayed, opacity, mapReady]);
+  }, [layerUrlKey, displayed, opacity, mapReady]);
 
   useEffect(() => {
     const instance = map.current;
@@ -269,8 +271,9 @@ function App() {
           <div className="rule" />
           {nationalView ? <div className="layer-picker">
             <label className="field-label" htmlFor="satellite-layer">SATELLITE LAYER</label>
-            <select id="satellite-layer" value={satelliteLayer} onChange={event => setSatelliteLayer(event.target.value)}>
+            <select id="satellite-layer" value={coverageMode ? 'coverage' : strongMode ? 'strong' : 'change'} onChange={event => setSatelliteLayer(event.target.value)}>
               <option value="change">Brighter than baseline</option>
+              {nationalView.strongChangeMin != null && <option value="strong">Stronger increases</option>}
               <option value="coverage">Matched coverage</option>
             </select>
           </div> : <>
@@ -311,10 +314,11 @@ function App() {
               <div className="legend-labels"><span>0%</span><span>100%</span></div>
               <p>Share of each cell with usable event and baseline readings.</p>
             </div> : hasRaster && <div className="map-legend">
-              <span>ABOVE BASELINE</span>
+              <span>{strongMode ? 'STRONGER INCREASES' : 'ABOVE BASELINE'}</span>
               <div className="legend-ramp" style={{ background: `linear-gradient(90deg, ${legend.colors.join(', ')})` }} />
               <div className="legend-labels"><span>0</span><span>≥ +{legend.limit}</span></div>
               <p>{unit} above baseline{nationalView ? ` · at least ${percent.format(nationalView.minCoverage)} matched coverage.` : ''}</p>
+              {strongMode && <p>Highlights changes above +{number.format(nationalView.strongChangeMin)} {unit}.</p>}
             </div>}
           </div>
           <div className="timeline">

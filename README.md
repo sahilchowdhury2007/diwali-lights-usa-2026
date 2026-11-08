@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The dashboard includes 2025 and 2026 views and a date slider. Select **United States** under **Observation** on the 2025 festival date for the national NOAA-20 comparison. Switch between **Brighter than baseline** and **Matched coverage**, or use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. The city markers open the Dallas–Fort Worth and Los Angeles pilots, which use separate baselines. Click a map cell to inspect the data. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
+The dashboard includes 2025 and 2026 views and a date slider. Select **United States** under **Observation** on the 2025 festival date for the national NOAA-20 comparison. The satellite layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. The city markers open the Dallas–Fort Worth and Los Angeles pilots, which use separate baselines. Click a map cell to inspect the data. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
 
 ## Run locally
 

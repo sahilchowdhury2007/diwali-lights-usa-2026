@@ -163,6 +163,10 @@ The pilot had five qualifying Los Angeles pairs and four qualifying Dallas–For
 
 Carry forward +0.5 nW/cm²/sr as the candidate display cutoff. It removed about 11 percentage points of ordinary-night highlights in Los Angeles and kept about 99% of the cells highlighted on Diwali at the zero cutoff. The stricter cutoffs removed more ordinary-night highlights and more of the Diwali highlights. Dallas–Fort Worth had a greater average share of ordinary-night highlights at every cutoff. Test the candidate on the separate ordinary nights before adopting it on the dashboard.
 
+All five holdout pairs qualified in Los Angeles. Moving from 0 to +0.5 nW/cm²/sr reduced the average share of ordinary-night highlights from 68.7% to 60.7% and the Diwali share from 94.2% to 91.9%. Diwali led in all five pairs at +0.5, though the December 2 UTC comparison was close at 92.3% versus 87.9%. Two Dallas–Fort Worth pairs qualified, and Diwali led in one of them. The Los Angeles and Dallas results use the same Diwali observation as the pilot.
+
+The national **Stronger increases** layer uses the +0.5 cutoff with the same colors and coverage rule as **Brighter than baseline**. It displays 9,516 of the 79,306 source cells with positive change, so the dashboard retains both views. The comparison tested two metros. The cutoff serves as a display filter rather than a test of whether an individual cell's increase is unusual.
+
 ## Mapping
 
 Render geographically referenced raster exports. A glow may be a display treatment for a validated positive radiance anomaly, but it must preserve the underlying scale and missing-data mask. Excess light is not the number of celebrations. Avoid independently normalizing each year or date to its own maximum. Keep no-observation, insufficient-baseline, no-positive-excess, and not-yet-published states distinct in the eventual layer and hover inspection.
