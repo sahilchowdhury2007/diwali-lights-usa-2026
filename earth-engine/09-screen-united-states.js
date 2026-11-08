@@ -1,12 +1,11 @@
-// Measure NOAA-20 event coverage and preview 5 km radiance changes across the U.S.
+// Measure and export NOAA-20 event coverage and radiance change across the U.S.
 var YEAR = 2025;
 var CREATE_EXPORTS = false;
-// Earth Engine's MODIS sinusoidal projection supports equal-area sampling across all states.
-var GRID_CRS = 'SR-ORG:6974';
-var GRID_METERS = 5000;
-var GRID_TRANSFORM = [GRID_METERS, 0, 0, 0, -GRID_METERS, 0];
+// Black Marble uses a geographic grid. Align the coarser grid to the same world bounds.
+var GRID_CRS = 'EPSG:4326';
+var GRID_STEP = 0.05;
+var GRID_TRANSFORM = [GRID_STEP, 0, -180, 0, -GRID_STEP, 90];
 var MIN_CONTROL_NIGHTS = 3;
-var MIN_PREVIEW_COVERAGE = 0.25;
 
 // UTC product dates for the local festival and comparison nights.
 var schedules = {
@@ -58,7 +57,7 @@ var images = ee.ImageCollection('NASA/VIIRS/002/VJ146A2')
   }).filter(ee.Filter.inList('utc_date', dates));
 
 print('Event UTC product date', schedule.event);
-print('Analysis grid', GRID_CRS, GRID_METERS + ' m');
+print('Analysis grid', GRID_CRS, GRID_STEP + ' degrees');
 print('State and district count', states.size());
 images.aggregate_array('utc_date').sort().evaluate(function(found, error) {
   if (error) {
@@ -73,13 +72,15 @@ images.aggregate_array('utc_date').sort().evaluate(function(found, error) {
   var screened = images.map(screen);
   var observed = ee.Image(screened.filter(ee.Filter.eq('utc_date', schedule.event)).first());
   var controls = screened.filter(ee.Filter.inList('utc_date', schedule.controls));
-  var baseline = controls.median().updateMask(controls.count().gte(MIN_CONTROL_NIGHTS));
+  var enoughControls = controls.count().gte(MIN_CONTROL_NIGHTS).unmask(0, false);
+  var event = coverageFlag(observed, 'event');
+  var matched = event.and(enoughControls).rename('matched_fraction');
+  var baseline = controls.median().updateMask(enoughControls);
   var nativeGrid = observed.projection();
   var change = observed.subtract(baseline).rename('radiance_change').setDefaultProjection(nativeGrid);
-  var matched = coverageFlag(change, 'matched_fraction');
 
-  // State percentages describe samples at 5 km grid centers within state boundaries.
-  var samples = coverageFlag(observed, 'event').addBands(matched.rename('matched')).multiply(100);
+  // State percentages count geographic grid centers within each state.
+  var samples = event.addBands(matched.rename('matched')).multiply(100);
   var coverage = samples.reduceRegions({
     collection: states,
     reducer: ee.Reducer.mean().unweighted()
@@ -89,24 +90,18 @@ images.aggregate_array('utc_date').sort().evaluate(function(found, error) {
     tileScale: 4
   }).select(['NAME', 'STUSPS', 'event_mean', 'matched_mean', 'matched_count'],
     ['state', 'postal', 'event_pct', 'matched_pct', 'sampled_cells'], false).sort('state');
-  print('Coverage by state and DC (5 km samples)', coverage);
+  print('Coverage by state and DC (0.05 degree samples)', coverage);
 
-  // Average valid native-pixel changes and separately track their share of each grid cell.
-  var coarse = change.addBands(matched).setDefaultProjection(nativeGrid).clipToCollection(states)
-    .reduceResolution({reducer: ee.Reducer.mean(), maxPixels: 1024})
-    .reproject({crs: GRID_CRS, crsTransform: GRID_TRANSFORM});
-  var fraction = coarse.select('matched_fraction');
-  var preview = coarse.select('radiance_change').updateMask(fraction.gte(MIN_PREVIEW_COVERAGE));
-
+  // Let the Code Editor request the display at its own zoom level.
   Map.setCenter(-98, 39, 4);
-  Map.addLayer(preview, {min: -5, max: 5, palette: ['#348ad0', '#3b4657', '#ffc56e']},
-    'Mean change from control median (nW/cm²/sr)');
-  Map.addLayer(fraction, {min: 0, max: 1, palette: ['#303746', '#67d8ab']},
-    'Share of each cell with matched observations', false);
+  Map.addLayer(change.clipToCollection(states),
+    {min: -5, max: 5, palette: ['#348ad0', '#3b4657', '#ffc56e']},
+    'Change from control median (nW/cm²/sr)');
+  Map.addLayer(matched.clipToCollection(states), {min: 0, max: 1, palette: ['#303746', '#67d8ab']},
+    'Matched observations', false);
   Map.addLayer(states.style({color: 'aab7ca', fillColor: '00000000', width: 1}), {}, 'State boundaries');
 
   if (CREATE_EXPORTS) {
-    var output = preview.addBands(fraction).unmask(-9999, false).toFloat();
     // Alaska crosses the antimeridian. Export both sides on the same grid.
     var tiles = {
       lower48: [-125, 24, -66, 50],
@@ -115,10 +110,16 @@ images.aggregate_array('utc_date').sort().evaluate(function(found, error) {
       hawaii: [-179, 18, -154, 29]
     };
     Object.keys(tiles).forEach(function(key) {
+      var region = ee.Geometry.Rectangle(tiles[key], GRID_CRS, false);
+      // Aggregate native readings into each export cell on the requested grid.
+      var output = change.addBands(matched).setDefaultProjection(nativeGrid)
+        .clipToCollection(states).clip(region)
+        .reduceResolution({reducer: ee.Reducer.mean(), maxPixels: 1024})
+        .unmask(-9999, false).toFloat();
       Export.image.toDrive({
         image: output,
-        description: 'diwali_' + YEAR + '_' + key + '_5km',
-        region: ee.Geometry.Rectangle(tiles[key], 'EPSG:4326', false),
+        description: 'diwali_' + YEAR + '_' + key + '_0p05deg',
+        region: region,
         crs: GRID_CRS,
         crsTransform: GRID_TRANSFORM,
         maxPixels: 1e8,

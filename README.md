@@ -35,7 +35,9 @@ Regenerate the tracked basemap geometry after changing the U.S. Atlas dependency
 
 ## Screen the United States
 
-Run the [national coverage script](earth-engine/09-screen-united-states.js) with `YEAR = 2025`. It samples coverage in all 50 states and DC and previews signed NOAA-20 radiance changes on a 5 km equal-area grid in Earth Engine's MODIS sinusoidal projection (`SR-ORG:6974`). Toggle the matched coverage layer to see the fraction of each display cell with a usable event reading and at least three usable control nights. The brightness layer displays cells where at least 25% of the area inside state boundaries meets that requirement. Set `CREATE_EXPORTS = true` to create four GeoTIFF tasks for the lower 48, Hawaii, and both sides of Alaska's antimeridian. Start them from the Tasks panel when exports are needed.
+Run the [national coverage script](earth-engine/09-screen-united-states.js) with `YEAR = 2025`. It reports coverage in all 50 states and DC as a percentage of samples on a 0.05° geographic grid. The map previews signed NOAA-20 radiance changes at its current zoom level. A matched sample has a usable event reading and at least three usable control nights.
+
+Set `CREATE_EXPORTS = true` to create four GeoTIFF tasks for the lower 48, Hawaii, and both sides of Alaska's antimeridian. Each export contains the mean change over matched observations and the fraction of each 0.05° cell that had matched coverage within state boundaries. Those fractions can mask low coverage when building the dashboard layer. Start the batch exports from the Tasks panel.
 
 ## Rebuild the metro overlays
 
