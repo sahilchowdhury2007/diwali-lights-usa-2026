@@ -61,6 +61,27 @@ Overnight playback is deferred while the MVP tests measured brightness against a
 
 The [metro coverage screen](../earth-engine/06-screen-metro-coverage.js) checks eight mainland test boxes on Suomi NPP and NOAA-20 separately. It reports raw availability, usable event pixels, and pixels with both a usable event reading and at least three usable control nights from the same platform. The 2025 dates and filters match the Dallas pilot. The 2026 screen uses the November 9 UTC candidate product and five earlier product dates after Sunday evenings. Use the coverage counts to choose follow-up regions before looking at brightness changes. Verify local overpass times before assigning event and control observations to nights. Two satellites observing the same festival night provide a cross-check, while a second year tests repeatability across festival nights.
 
+### 2025 metro coverage results
+
+Matched cells and percent of each metro's full test box, as reported by the Code Editor run:
+
+| Metro | Suomi NPP | NOAA-20 |
+| --- | ---: | ---: |
+| Bay Area | 0 | 12,622 (84.9%) |
+| Los Angeles | 0 | 8,922 (46.9%) |
+| Dallas–Fort Worth | 22,340 (86.8%) | 19,007 (73.8%) |
+| Chicago | 0 | 9,638 (46.5%) |
+| New York–North Jersey | 0 | 9,642 (52.0%) |
+| Seattle | 0 | 7,775 (46.3%) |
+| Atlanta | 0 | 0 |
+| Washington, DC area | 17,213 (83.4%) | 18,041 (87.4%) |
+
+Atlanta had 15,815 usable NOAA-20 event pixels, but none had the required three usable control readings. The [metro brightness comparison](../earth-engine/07-compare-metro-brightness.js) runs on all seven metros with matched pixels. It uses the Dallas fixed-grid calculation separately by satellite and reports mean and median change. It also compares the event with each ordinary night on pixels both observed, requiring two usable observations from the other control nights as in the Dallas paired comparison. Compare signs and magnitudes alongside the pixel counts; these are descriptive checks on the observed area.
+
+NASA's Level-1 swath metadata shows overlapping nighttime granules for these metro boxes between 06:42 and 12:06 UTC on October 21, all after the October 20 local evening. NOAA-20 had overlapping swaths at [07:00–07:06 UTC](https://cmr.earthdata.nasa.gov/search/concepts/G3824402056-LAADS.html) for Chicago, New York–North Jersey, and DC; [08:42–08:48 UTC](https://cmr.earthdata.nasa.gov/search/concepts/G3824511904-LAADS.html) for those metros, Dallas, and Los Angeles; and [10:24–10:30 UTC](https://cmr.earthdata.nasa.gov/search/concepts/G3825774952-LAADS.html) for Los Angeles, the Bay Area, and Seattle. Seattle had two additional overlaps at [10:18–10:24 UTC](https://cmr.earthdata.nasa.gov/search/concepts/G3825774938-LAADS.html) and [12:00–12:06 UTC](https://cmr.earthdata.nasa.gov/search/concepts/G3825768610-LAADS.html). The Suomi NPP DC swath overlaps at [06:42–06:48 UTC](https://cmr.earthdata.nasa.gov/search/concepts/G3824522090-LAADS.html). These are granule windows, not exact observation times for individual pixels in the daily product.
+
+Neither catalog had an image for November 9, 2026 UTC when the coverage screen ran. [NASA announced the end of new Suomi NPP data delivery on November 2, 2026](https://www.earthdata.nasa.gov/data/alerts-outages/suomi-npp-observations-cease-november-2-2026). Check NOAA-20 for the same-satellite 2025–2026 comparison once its 2026 image arrives.
+
 After access works:
 
 1. Select several test regions and comparison regions before inspecting anomaly maps. Include regions with differing urban brightness, weather, and geography; avoid selecting only apparent hotspots.
