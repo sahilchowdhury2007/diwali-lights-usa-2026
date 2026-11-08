@@ -152,6 +152,17 @@ Five Los Angeles pairs passed the overlap screen. In all five, Diwali had a high
 
 The [map threshold check](../earth-engine/11-check-map-thresholds.js) tests thresholds of 0, +0.5, +1, and +2 nW/cm²/sr on the dashboard's 0.05° grid. Each pair averages changes over the same usable source pixels within each cell. It applies the national map's 25% matched coverage rule and retains the 70% metro overlap cutoff on eligible coarse cells. The `pilot` set uses the same six ordinary dates. The `holdout` set uses five additional Monday nights for a separate check after selecting a candidate threshold. The holdout spans a wider seasonal window, and both sets use the same Diwali observation.
 
+The pilot had five qualifying Los Angeles pairs and four qualifying Dallas–Fort Worth pairs. Each rate below is the average of the percentages of paired cells above the cutoff, with each qualifying night given equal weight.
+
+| Cutoff (nW/cm²/sr) | Los Angeles Diwali | Los Angeles ordinary | Dallas–Fort Worth Diwali | Dallas–Fort Worth ordinary |
+| ---: | ---: | ---: | ---: | ---: |
+| 0 | 95.1% | 47.7% | 52.6% | 66.7% |
+| +0.5 | 93.9% | 36.3% | 42.5% | 56.1% |
+| +1 | 80.9% | 31.5% | 31.1% | 45.5% |
+| +2 | 68.1% | 20.8% | 19.5% | 29.9% |
+
+Carry forward +0.5 nW/cm²/sr as the candidate display cutoff. It removed about 11 percentage points of ordinary-night highlights in Los Angeles and kept about 99% of the cells highlighted on Diwali at the zero cutoff. The stricter cutoffs removed more ordinary-night highlights and more of the Diwali highlights. Dallas–Fort Worth had a greater average share of ordinary-night highlights at every cutoff. Test the candidate on the separate ordinary nights before adopting it on the dashboard.
+
 ## Mapping
 
 Render geographically referenced raster exports. A glow may be a display treatment for a validated positive radiance anomaly, but it must preserve the underlying scale and missing-data mask. Excess light is not the number of celebrations. Avoid independently normalizing each year or date to its own maximum. Keep no-observation, insufficient-baseline, no-positive-excess, and not-yet-published states distinct in the eventual layer and hover inspection.
