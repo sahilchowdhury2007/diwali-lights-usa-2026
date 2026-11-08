@@ -1,5 +1,4 @@
-// Paste this entire script into a new Earth Engine Code Editor tab and run it.
-// Leave YEAR at 2025 for the first run. Switch to 2026 after its image arrives.
+// Measure metro coverage for the selected event year and each VIIRS satellite.
 var YEAR = 2025;
 var MIN_CONTROL_NIGHTS = 3;
 var SCALE_METERS = 500;
@@ -105,7 +104,7 @@ function screenPlatform(label, collection, schedule) {
         .divide(ee.Number(totals.get('total_pixels'))).multiply(100);
       return totals.set('metro', metro[0]).set('matched_percent', coverage);
     });
-    print(label + ' — coverage by metro (send this list)', ee.List(rows));
+    print(label + ' — coverage by metro', ee.List(rows));
   });
 }
 

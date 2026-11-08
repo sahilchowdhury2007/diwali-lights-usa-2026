@@ -1,5 +1,4 @@
-// Paste the whole script into a new Earth Engine Code Editor script and run it.
-// The Console shows both satellites. Each uses its own ordinary nights.
+// Compare metro brightness against ordinary nights from the same satellite.
 var EVENT = '2025-10-21';  // UTC product date for the overnight passes.
 var CONTROL_DATES = [
   '2025-09-23', '2025-09-30', '2025-10-07', '2025-10-14', '2025-10-28'
@@ -94,7 +93,7 @@ function compare(platform, collectionId, metroNames) {
       return feature.toDictionary(['metro', 'change_count', 'change_mean', 'change_median'])
         .set('ordinary_night_checks', ee.List(pairs));
     });
-    print(platform + ' — brightness by metro (send this list)', results);
+    print(platform + ' — brightness by metro', results);
   });
 }
 

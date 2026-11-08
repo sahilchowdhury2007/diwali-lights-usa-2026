@@ -1,4 +1,4 @@
-// Run this full script in Earth Engine after the six-night coverage check.
+// Compare the Dallas–Fort Worth event with individual controls on shared pixels.
 var region = ee.Geometry.Rectangle([-97.55, 32.55, -96.60, 33.10]);
 var eventDate = '2025-10-21';
 var controlDates = [

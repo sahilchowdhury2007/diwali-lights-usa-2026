@@ -1,7 +1,5 @@
-// Paste into https://code.earthengine.google.com/ after selecting your project.
-// This is a coverage diagnostic, not an anomaly map or a Diwali result.
-// It does not start an export automatically or write Earth Engine assets.
-// Change REGION to inspect a different location. Bounds are [west,south,east,north].
+// Count available and quality-screened nighttime pixels by UTC date.
+// REGION is a bounding box in [west, south, east, north] order.
 var REGION = ee.Geometry.Rectangle([-122.25, 37.15, -121.65, 37.65]);
 var START = '2025-09-22';
 var END_EXCLUSIVE = '2025-11-11';

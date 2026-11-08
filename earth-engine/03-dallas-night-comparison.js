@@ -1,4 +1,4 @@
-// Copy this full script into Earth Engine and run it after the Dallas pilot.
+// Compare Dallas–Fort Worth brightness across nights on a fixed analysis grid.
 var region = ee.Geometry.Rectangle([-97.55, 32.55, -96.60, 33.10]);
 var eventDate = '2025-10-21';
 var controlDates = [

@@ -1,4 +1,4 @@
-// Paste this full script into Earth Engine to export the verified Dallas pilot.
+// Export the Dallas–Fort Worth radiance change and its baseline as a GeoTIFF.
 var region = ee.Geometry.Rectangle([-97.55, 32.55, -96.60, 33.10]);
 var eventDate = '2025-10-21';
 var controlDates = [

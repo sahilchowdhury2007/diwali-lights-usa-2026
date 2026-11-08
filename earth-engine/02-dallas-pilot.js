@@ -1,4 +1,4 @@
-// Paste this full script into a new Earth Engine Code Editor script.
+// Estimate the Dallas–Fort Worth radiance change relative to ordinary nights.
 var region = ee.Geometry.Rectangle([-97.55, 32.55, -96.60, 33.10]);
 var eventDate = '2025-10-21'; // UTC product date for the night of Oct 20 in Dallas.
 var controlDates = [

@@ -1,5 +1,4 @@
-// Paste this whole script into a new Earth Engine Code Editor script and run it.
-// Compare four NOAA-20 nights using exactly the same Los Angeles pixels.
+// Compare four NOAA-20 nights on the same set of Los Angeles pixels.
 var region = ee.Geometry.Rectangle([-118.65, 33.75, -117.95, 34.30]);
 var eventDate = '2025-10-21';  // UTC product date after the October 20 evening.
 // These three controls each matched more than 8,800 event pixels in script 07.
@@ -61,7 +60,7 @@ images.aggregate_array('utc_date').sort().evaluate(function(found, error) {
     maxPixels: 1e7
   });
 
-  print('Los Angeles — same pixels across four nights (send this result)', stats);
+  print('Los Angeles — same pixels across four nights', stats);
   Map.centerObject(region, 10);
   Map.addLayer(excess.clip(region), {
     min: -5,

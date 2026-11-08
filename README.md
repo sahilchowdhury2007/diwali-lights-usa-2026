@@ -30,8 +30,8 @@ Regenerate the tracked basemap geometry after changing the U.S. Atlas dependency
 
 1. Sign in at https://code.earthengine.google.com/ with an account that has access to the registered Cloud project `diwali-lights-usa`. Select that project from the account menu in the Code Editor.
 2. Run `earth-engine/01-check-coverage.js` in the Code Editor. It inspects daily image availability and usable pixel counts in a small test region. The optional CSV export must be started separately from the Tasks panel.
-3. To look beyond the Dallas pilot, paste the entire [metro coverage script](earth-engine/06-screen-metro-coverage.js) into a new Code Editor script and click **Run**. Leave `YEAR = 2025` for the first run and read the two **coverage by metro** lists in the Console. The script also reports whether the candidate November 9 UTC product is present for 2026. No export is needed.
-4. Run the full [metro brightness comparison](earth-engine/07-compare-metro-brightness.js) in a separate Code Editor script. It compares the 2025 event against the same satellite's ordinary nights for the metros with matched coverage. Read the two **brightness by metro** lists in the Console.
+3. Run the [metro coverage screen](earth-engine/06-screen-metro-coverage.js) with `YEAR = 2025` to reproduce the historical coverage results. The Console reports matched coverage by metro and the availability of the November 9 UTC product for 2026.
+4. Run the [metro brightness comparison](earth-engine/07-compare-metro-brightness.js) to compare the 2025 event with ordinary nights from the same satellite. The Console reports each metro's change from its baseline and its comparisons with individual nights.
 
 ## Rebuild the Dallas overlay
 
