@@ -13,7 +13,7 @@ from rasterio.warp import transform
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "public" / "data"
-COLORS = ["#348ad0", "#3b4657", "#ffc56e"]
+COLORS = ["#7d5636", "#d4924c", "#ffdda2"]
 LIMIT = 5
 OBSERVATIONS = {
     "dallas": {
@@ -90,11 +90,14 @@ def main():
     height, width = valid.shape
     rgba = np.zeros((height, width, 4), dtype=np.uint8)
     palette = np.array([ImageColor.getrgb(color) for color in COLORS])
+    brighter = change > 0
+    visible = valid.copy()
+    visible[valid] = brighter
     for channel in range(3):
-        rgba[valid, channel] = np.interp(
-            change, [-LIMIT, 0, LIMIT], palette[:, channel],
+        rgba[visible, channel] = np.interp(
+            change[brighter], [0, LIMIT / 2, LIMIT], palette[:, channel],
         ).round().astype(np.uint8)
-    rgba[valid, 3] = 255
+    rgba[visible, 3] = 255
 
     output = DATA / asset
     output.parent.mkdir(parents=True, exist_ok=True)

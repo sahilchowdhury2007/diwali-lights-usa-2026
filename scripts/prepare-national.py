@@ -21,7 +21,7 @@ REGIONS = {
     "alaska_east_longitude": ("Western Aleutians", (172, 51, 180, 56)),
     "hawaii": ("Hawaii", (-179, 18, -154, 29)),
 }
-CHANGE_COLORS = ["#348ad0", "#3b4657", "#ffc56e"]
+CHANGE_COLORS = ["#7d5636", "#d4924c", "#ffdda2"]
 COVERAGE_COLORS = ["#4a3b53", "#65d9bc"]
 CHANGE_LIMIT = 5
 MIN_COVERAGE = 0.25
@@ -75,15 +75,16 @@ def prepare_tile(path, name, bounds, asset, bands, source_transform):
     grid = display_grid(bands, source_transform, bounds)
     change, coverage = grid
     width, height = change.shape[1], change.shape[0]
-    visible = np.isfinite(change) & (coverage >= MIN_COVERAGE)
+    eligible = np.isfinite(change) & (coverage >= MIN_COVERAGE)
+    visible = eligible & (change > 0)
     known = np.isfinite(coverage)
     DATA.joinpath(asset).parent.mkdir(parents=True, exist_ok=True)
     change_url, coverage_url, pixels_url = f"{asset}.png", f"{asset}-coverage.png", f"{asset}-pixels.json"
-    save_layer(DATA / change_url, change, visible, [-CHANGE_LIMIT, 0, CHANGE_LIMIT], CHANGE_COLORS)
+    save_layer(DATA / change_url, change, visible, [0, CHANGE_LIMIT / 2, CHANGE_LIMIT], CHANGE_COLORS)
     save_layer(DATA / coverage_url, coverage, known, [0, 1], COVERAGE_COLORS)
     cells = [None] * coverage.size
     for index in np.flatnonzero(known):
-        value = round(float(change.flat[index]), 4) if visible.flat[index] else None
+        value = round(float(change.flat[index]), 4) if eligible.flat[index] else None
         cells[index] = [value, round(float(coverage.flat[index]), 6)]
     (DATA / pixels_url).write_text(
         json.dumps({"width": width, "height": height, "cells": cells}, separators=(",", ":")),
@@ -102,7 +103,8 @@ def prepare_tile(path, name, bounds, asset, bands, source_transform):
             "inputSha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         },
         "matchedCells": int(np.isfinite(bands[0]).sum()),
-        "displayedCells": int((bands[1] >= MIN_COVERAGE).sum()),
+        "eligibleCells": int((bands[1] >= MIN_COVERAGE).sum()),
+        "displayedCells": int(((bands[0] > 0) & (bands[1] >= MIN_COVERAGE)).sum()),
     }
 
 

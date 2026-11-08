@@ -22,7 +22,9 @@ const changeNumber = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2, 
 const percent = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 });
 
 function dataUrl(path) {
-  return new URL(path, new URL(`${base}data/`, window.location.href)).href;
+  const url = new URL(path, new URL(`${base}data/`, window.location.href));
+  url.searchParams.set('v', __MANIFEST_REVISION__);
+  return url.href;
 }
 
 function dateAtOffset(year, offset) {
@@ -268,12 +270,12 @@ function App() {
           {nationalView ? <div className="layer-picker">
             <label className="field-label" htmlFor="satellite-layer">SATELLITE LAYER</label>
             <select id="satellite-layer" value={satelliteLayer} onChange={event => setSatelliteLayer(event.target.value)}>
-              <option value="change">Brightness change</option>
+              <option value="change">Brighter than baseline</option>
               <option value="coverage">Matched coverage</option>
             </select>
           </div> : <>
             <span className="field-label">SATELLITE LAYER</span>
-            <div className="layer-label"><span className="light-dot" /> Brightness change <span className="pill">SATELLITE</span></div>
+            <div className="layer-label"><span className="light-dot" /> Brighter than baseline <span className="pill">SATELLITE</span></div>
           </>}
           <label className="opacity-label" htmlFor="opacity">Layer opacity <span>{opacity}%</span></label>
           <input id="opacity" type="range" min="10" max="100" value={opacity} disabled={!hasRaster} onChange={event => setOpacity(Number(event.target.value))} />
@@ -281,7 +283,7 @@ function App() {
           <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
             {nationalView ? <>
               <p>Event brightness compared with the median of at least three ordinary nights.</p>
-              <p>Brightness is shown where at least {percent.format(nationalView.minCoverage)} of a cell has matched coverage.</p>
+              <p>Brightness increases are shown where at least {percent.format(nationalView.minCoverage)} of a cell has matched coverage.</p>
               <p>Use Map View to explore Alaska, Hawaii, and the Western Aleutians.</p>
             </> : showOverview && hasRaster ? <>
               <p>{observations.map(item => item.name).join(' and ')} have published comparisons. Each uses its own baseline.</p>
@@ -309,10 +311,10 @@ function App() {
               <div className="legend-labels"><span>0%</span><span>100%</span></div>
               <p>Share of each cell with usable event and baseline readings.</p>
             </div> : hasRaster && <div className="map-legend">
-              <span>CHANGE FROM BASELINE</span>
+              <span>ABOVE BASELINE</span>
               <div className="legend-ramp" style={{ background: `linear-gradient(90deg, ${legend.colors.join(', ')})` }} />
-              <div className="legend-labels"><span>≤ −{legend.limit}</span><span>0</span><span>≥ +{legend.limit}</span></div>
-              <p>{unit} · blue dimmer · gold brighter<br />{nationalView ? `Shown at ${percent.format(nationalView.minCoverage)} coverage or higher.` : 'Transparent areas lack a usable comparison.'}</p>
+              <div className="legend-labels"><span>0</span><span>≥ +{legend.limit}</span></div>
+              <p>{unit} above baseline{nationalView ? ` · at least ${percent.format(nationalView.minCoverage)} matched coverage.` : ''}</p>
             </div>}
           </div>
           <div className="timeline">

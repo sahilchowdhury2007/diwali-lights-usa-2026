@@ -44,9 +44,9 @@
               ]
             ],
             "colors": [
-              "#348ad0",
-              "#3b4657",
-              "#ffc56e"
+              "#7d5636",
+              "#d4924c",
+              "#ffdda2"
             ],
             "limit": 5,
             "validCells": 27163,
@@ -89,9 +89,9 @@
               ]
             ],
             "colors": [
-              "#348ad0",
-              "#3b4657",
-              "#ffc56e"
+              "#7d5636",
+              "#d4924c",
+              "#ffdda2"
             ],
             "limit": 5,
             "validCells": 10990,
@@ -134,15 +134,16 @@
                 ]
               ],
               "colors": [
-                "#348ad0",
-                "#3b4657",
-                "#ffc56e"
+                "#7d5636",
+                "#d4924c",
+                "#ffdda2"
               ],
               "limit": 5,
               "inputSha256": "6759a00f5b38cbac855a8d56191c697fc2332c286514b2776a3a0f1d0a7f0d44"
             },
             "matchedCells": 190858,
-            "displayedCells": 139171
+            "eligibleCells": 139171,
+            "displayedCells": 78737
           },
           {
             "name": "Alaska",
@@ -169,15 +170,16 @@
                 ]
               ],
               "colors": [
-                "#348ad0",
-                "#3b4657",
-                "#ffc56e"
+                "#7d5636",
+                "#d4924c",
+                "#ffdda2"
               ],
               "limit": 5,
               "inputSha256": "443585d4b325d76ecfbe3d1cf03d92c735fc92e65e4ffee4cfbeef6fa6499cbd"
             },
             "matchedCells": 13050,
-            "displayedCells": 4304
+            "eligibleCells": 4304,
+            "displayedCells": 213
           },
           {
             "name": "Western Aleutians",
@@ -204,14 +206,15 @@
                 ]
               ],
               "colors": [
-                "#348ad0",
-                "#3b4657",
-                "#ffc56e"
+                "#7d5636",
+                "#d4924c",
+                "#ffdda2"
               ],
               "limit": 5,
               "inputSha256": "13cd7ed3e4e436738909317644f0f17191e91b200c740be46cda0df89cdf0a9a"
             },
             "matchedCells": 0,
+            "eligibleCells": 0,
             "displayedCells": 0
           },
           {
@@ -239,15 +242,16 @@
                 ]
               ],
               "colors": [
-                "#348ad0",
-                "#3b4657",
-                "#ffc56e"
+                "#7d5636",
+                "#d4924c",
+                "#ffdda2"
               ],
               "limit": 5,
               "inputSha256": "6dd02dbb725048befd8b739527694275beebbd966448d7e4353a1c69727a52ed"
             },
             "matchedCells": 901,
-            "displayedCells": 566
+            "eligibleCells": 566,
+            "displayedCells": 356
           }
         ]
       }

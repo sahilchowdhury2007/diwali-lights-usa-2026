@@ -55,7 +55,7 @@ The [paired comparison](../earth-engine/04-dallas-paired-comparison.js) matches 
 
 The mean was lower on the event night in all four usable pairs. The positive October 7 median shows that the distribution of local changes differed from the overall mean. These are descriptive results for the Dallas pilot. Coverage differs by pair, and the comparison retains differences in overpass time and viewing geometry.
 
-The [Dallas export script](../earth-engine/05-export-dallas-pilot.js) prepares a GeoTIFF using the fixed-grid pilot baseline. Its four bands store event radiance, baseline median, signed change, and usable control count. The [converter](../scripts/prepare-dallas-pilot.py) derives the geographic corners from the Web Mercator export and keeps missing cells transparent. The map clips colors to ±5 nW/cm²/sr and shows the pixel value on click. Reprojection changes the number of display cells. The reported 22,340 comparisons refer to the original analysis grid.
+The [Dallas export script](../earth-engine/05-export-dallas-pilot.js) prepares a GeoTIFF using the fixed-grid pilot baseline. Its four bands store event radiance, baseline median, signed change, and usable control count. The [converter](../scripts/prepare-dallas-pilot.py) derives the geographic corners from the Web Mercator export. The map colors positive changes up to +5 nW/cm²/sr and provides signed readings on click. Reprojection changes the number of display cells. The reported 22,340 comparisons refer to the original analysis grid.
 
 Overnight playback is deferred while the MVP tests measured brightness against a baseline. Tracking lights that switch off or stay on requires repeat readings of the same place within one night, aligned and screened for comparable conditions.
 
@@ -135,7 +135,7 @@ The [NOAA-20 national screen](../earth-engine/09-screen-united-states.js) found 
 
 DC had six matches among seven sampled locations. West Virginia had usable event readings at nearly all sampled locations, but few met the control requirement. For the national map, the regional GeoTIFFs preserve both signed brightness change and the fraction of each cell with matched coverage so that areas with sparse observations remain distinguishable.
 
-The four exports contain 204,809 source cells with some matched coverage. The national brightness map shows the 144,041 cells that reach the 25% coverage threshold, including 139,171 in the lower 48, 4,304 in Alaska, and 566 in Hawaii. The tile on the positive-longitude side of the Alaska antimeridian contains mapped cells at 0% matched coverage. The source-cell totals are distinct from the state screen, which samples grid centers instead of aggregating the underlying pixels. The dashboard uses nearest-neighbor resampling for the Web Mercator display and keeps the ±5 nW/cm²/sr color range.
+The four exports contain 204,809 source cells with some matched coverage. Of these, 144,041 reach the 25% coverage threshold and 79,306 also have positive mean change. The national brightness map colors those increases from 0 to +5 nW/cm²/sr, while the coverage layer shows all measured coverage fractions, including 0% in the Western Aleutians. These source-cell totals differ from the state screen, which samples grid centers. The dashboard uses nearest-neighbor resampling for the Web Mercator display.
 
 ### Remaining checks
 
