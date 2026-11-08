@@ -57,11 +57,7 @@ The mean was lower on the event night in all four usable pairs. The positive Oct
 
 The [Dallas export script](../earth-engine/05-export-dallas-pilot.js) prepares a GeoTIFF using the fixed-grid pilot baseline. Its four bands store event radiance, baseline median, signed change, and usable control count. The [converter](../scripts/prepare-dallas-pilot.py) derives the geographic corners from the Web Mercator export and keeps missing cells transparent. The map clips colors to ±5 nW/cm²/sr and shows the pixel value on click. Reprojection changes the number of display cells. The reported 22,340 comparisons refer to the original analysis grid.
 
-## Overnight playback
-
-The timeline uses New York City sunset and Los Angeles sunrise as clock anchors for each festival night. The 2025 anchors are October 20 at 6:08 p.m. EDT and October 21 at 7:03 a.m. PDT. The 2026 anchors are November 8 at 4:44 p.m. EST and November 9 at 6:20 a.m. PST. [U.S. Naval Observatory solar data](https://aa.usno.navy.mil/data/api#Complete_Sun_and_Moon_Data_for_One_Day)
-
-The Dallas image appears at the midpoint of the 08:24–08:30 UTC granule window. Other times have no published frame. The color shows change from a baseline of other nights. Detecting an on or off transition requires repeat readings of the same place within one night, aligned and screened for comparable conditions.
+Overnight playback is deferred while the MVP tests measured brightness against a baseline. Tracking lights that switch off or stay on requires repeat readings of the same place within one night, aligned and screened for comparable conditions.
 
 After access works:
 
@@ -80,7 +76,7 @@ The base U.S. map includes separate views for the mainland, Alaska, and Hawaii; 
 
 ## Static data contract for initial UI
 
-`public/data/manifest.json` stores the local festival date, the sunset and sunrise anchors, and ready observations for each year. A ready observation specifies its UTC product date, overpass window, source record, analysis summary, and display raster. Corners are ordered top-left, top-right, bottom-right, bottom-left. The pixel data uses row-major order with event radiance, baseline median, signed change, and control count. Missing cells are null.
+`public/data/manifest.json` stores the local festival date and ready observations for each year. A ready observation specifies its UTC product date, overpass window, source record, analysis summary, and display raster. Corners are ordered top-left, top-right, bottom-right, bottom-left. The pixel data uses row-major order with event radiance, baseline median, signed change, and control count. Missing cells are null.
 
 ## Delivery sequence
 

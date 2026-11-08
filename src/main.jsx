@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as maplibre from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { makeNightFrames, OvernightPlayback } from './overnight.jsx';
 import './style.css';
 
 maplibre.setWorkerUrl(workerUrl);
@@ -43,56 +42,13 @@ function App() {
   const [area, setArea] = useState('Observation area');
   const [opacity, setOpacity] = useState(85);
   const [showMethod, setShowMethod] = useState(false);
-  const [frameIndex, setFrameIndex] = useState(null);
-  const [playing, setPlaying] = useState(false);
   const mapContainer = useRef(null);
   const map = useRef(null);
   const date = dateAtOffset(year, offset);
-  const yearData = manifest?.years?.[year];
-  const observations = useMemo(
-    () => yearData?.observations?.filter(item => item.date === date && item.status === 'ready') ?? [],
-    [yearData, date],
+  const record = manifest?.years?.[year]?.observations?.find(
+    item => item.date === date && item.status === 'ready',
   );
-  const frames = useMemo(
-    () => yearData?.overnight && date === yearData.eventDate ? makeNightFrames(yearData.overnight, observations) : [],
-    [yearData, date, observations],
-  );
-  const initialFrame = Math.max(0, frames.findIndex(frame => frame.observation));
-  const activeFrame = frameIndex ?? initialFrame;
-  const record = frames.length ? frames[activeFrame]?.observation : observations[0];
-  const observationArea = observations[0];
-  const hasRaster = record?.status === 'ready' && Boolean(record.raster?.url);
-
-  function selectDate(nextYear, nextOffset) {
-    setYear(nextYear);
-    setOffset(nextOffset);
-    setFrameIndex(null);
-    setPlaying(false);
-  }
-
-  function selectFrame(index) {
-    setFrameIndex(index);
-    setPlaying(false);
-  }
-
-  function togglePlayback() {
-    if (playing) {
-      setPlaying(false);
-      return;
-    }
-    if (frameIndex === null || activeFrame === frames.length - 1) setFrameIndex(0);
-    setPlaying(true);
-  }
-
-  useEffect(() => {
-    if (!playing || activeFrame >= frames.length - 1) return;
-    const timer = setTimeout(() => {
-      const next = activeFrame + 1;
-      setFrameIndex(next);
-      if (next === frames.length - 1) setPlaying(false);
-    }, frames[activeFrame]?.observation ? 2200 : 550);
-    return () => clearTimeout(timer);
-  }, [activeFrame, frames, playing]);
+  const hasRaster = Boolean(record?.raster?.url);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -141,12 +97,12 @@ function App() {
 
   useEffect(() => {
     if (!map.current || !mapReady) return;
-    const coordinates = observationArea?.raster?.coordinates;
+    const coordinates = record?.raster?.coordinates;
     const bounds = area === 'Observation area' && coordinates
       ? [coordinates[3], coordinates[1]]
       : locations[area] ?? locations['United States'];
     map.current.fitBounds(bounds, { padding: 42, duration: 700 });
-  }, [area, observationArea, mapReady]);
+  }, [area, record, mapReady]);
 
   useEffect(() => {
     const instance = map.current;
@@ -196,13 +152,13 @@ function App() {
     return () => { controller.abort(); instance.off('click', inspect); popup.remove(); };
   }, [mapReady, record]);
 
-  const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index' : hasRaster ? `${record.name} pilot` : 'No observation at this time';
+  const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index' : hasRaster ? `${record.name} pilot` : 'No processed observation';
   const emptyTitle = dataError ? 'Data index unavailable' : 'No satellite observation';
   const emptyMessage = dataError
     ? 'The observation index could not load.'
-    : observationArea
-      ? 'Use the Dallas pass marker to jump to the measured snapshot.'
-      : 'A processed snapshot is unavailable for this date.';
+    : year === 2025
+      ? 'Select Diwali to view the October 20 Dallas–Fort Worth pilot.'
+      : 'Satellite observations for this date are pending.';
 
   return <>
     <header className="topbar">
@@ -220,13 +176,13 @@ function App() {
         <aside className="sidebar">
           <p className="eyebrow">01 / EXPLORE THE NIGHT</p>
           <h2>A little extra light.</h2>
-          <p className="small-copy">Explore measured brightness changes relative to a local baseline. Step through the night to see when satellite readings are available.</p>
+          <p className="small-copy">Explore measured nighttime brightness changes relative to a local baseline. Start with the 2025 Dallas–Fort Worth pilot.</p>
           <label className="field-label" id="year-label">DIWALI YEAR</label>
-          <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => selectDate(value, offset)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
+          <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => setYear(value)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
           <div className="event-row"><span>Festival date</span><strong>{formatDate(dates[year])}</strong></div>
           <label className="field-label" htmlFor="area">MAP VIEW</label>
           <select id="area" value={area} onChange={event => setArea(event.target.value)}>
-            <option value="Observation area">{observationArea?.name ?? 'Observation area'}</option>
+            <option value="Observation area">{record?.name ?? 'Observation area'}</option>
             {Object.keys(locations).map(name => <option key={name}>{name}</option>)}
           </select>
           <div className="rule" />
@@ -234,8 +190,8 @@ function App() {
           <div className="layer-label"><span className="light-dot" /> Brightness change <span className="pill">SATELLITE</span></div>
           <label className="opacity-label" htmlFor="opacity">Layer opacity <span>{opacity}%</span></label>
           <input id="opacity" type="range" min="10" max="100" value={opacity} disabled={!hasRaster} onChange={event => setOpacity(Number(event.target.value))} />
-          <div className="layer-note">{hasRaster ? 'Click a map cell for its reading and baseline.' : 'Layer opacity is available during a measured pass.'}</div>
-          <div className="status-card" aria-live={playing ? 'off' : 'polite'}><span className="status-dot" /><div><strong>{stateLabel}</strong>
+          <div className="layer-note">{hasRaster ? 'Click a map cell for its reading and baseline.' : 'Layer opacity is available for processed observations.'}</div>
+          <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
             {hasRaster && record.summary ? <>
               <p>Mean {changeNumber.format(record.summary.mean)} · median {changeNumber.format(record.summary.median)} {unit}</p>
               <p>{number.format(record.summary.count)} compared cells on the analysis grid</p>
@@ -259,11 +215,10 @@ function App() {
           </div>
           <div className="timeline">
             <div className="timeline-heading"><div><span className="field-label">NIGHT TO EXPLORE</span><strong>{formatDate(date)}</strong></div><span className="relative-day">{Number(offset) === 0 ? 'Diwali reference date' : `${Math.abs(offset)} ${Math.abs(offset) === 1 ? 'day' : 'days'} ${offset < 0 ? 'before' : 'after'} Diwali`}</span></div>
-            <label className="sr-only" htmlFor="night">Days relative to Diwali</label><input id="night" type="range" min="-7" max="7" step="1" value={offset} onChange={event => selectDate(year, Number(event.target.value))} />
-            <div className="timeline-labels"><span>−7 DAYS</span><button onClick={() => selectDate(year, 0)}>DIWALI <span>✧</span></button><span>+7 DAYS</span></div>
-            <p className="timeline-note">{hasRaster ? `Local festival evening · UTC product date ${record.productDateUtc}` : 'Choose the festival date to explore its overnight timeline.'}</p>
+            <label className="sr-only" htmlFor="night">Days relative to Diwali</label><input id="night" type="range" min="-7" max="7" step="1" value={offset} onChange={event => setOffset(Number(event.target.value))} />
+            <div className="timeline-labels"><span>−7 DAYS</span><button onClick={() => setOffset(0)}>DIWALI <span>✧</span></button><span>+7 DAYS</span></div>
+            {hasRaster && <p className="timeline-note">Local festival evening · UTC product date {record.productDateUtc}</p>}
           </div>
-          {frames.length > 0 && <OvernightPlayback frames={frames} index={activeFrame} playing={playing} onSelect={selectFrame} onPlay={togglePlayback} />}
         </div>
       </section>
 

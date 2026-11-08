@@ -5,10 +5,6 @@
   "years": {
     "2025": {
       "eventDate": "2025-10-20",
-      "overnight": {
-        "sunset": "2025-10-20T22:08:00Z",
-        "sunrise": "2025-10-21T14:03:00Z"
-      },
       "status": "pilot_ready",
       "observations": [
         {
@@ -59,10 +55,6 @@
     },
     "2026": {
       "eventDate": "2026-11-08",
-      "overnight": {
-        "sunset": "2026-11-08T21:44:00Z",
-        "sunrise": "2026-11-09T14:20:00Z"
-      },
       "status": "awaiting_event",
       "observations": []
     }

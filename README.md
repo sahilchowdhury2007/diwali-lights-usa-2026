@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The dashboard includes 2025 and 2026 views, a date slider, and sunset-to-sunrise playback on each festival date. The 2025 Dallas–Fort Worth snapshot shows measured brightness change from the control median. Click a map cell to see the event reading, baseline, change, and number of usable control nights. Playback shows gaps between measured passes. See the [coverage and Dallas results](docs/methodology.md#first-diagnostic).
+The dashboard includes 2025 and 2026 views and a date slider. The 2025 Dallas–Fort Worth snapshot shows measured brightness change from the control median. Click a map cell to see the event reading, baseline, change, and number of usable control nights. See the [coverage and Dallas results](docs/methodology.md#first-diagnostic).
 
 ## Run locally
 
