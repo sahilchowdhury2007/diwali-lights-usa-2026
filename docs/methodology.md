@@ -82,7 +82,25 @@ NASA's Level-1 swath metadata shows overlapping nighttime granules for these met
 
 Neither catalog had an image for November 9, 2026 UTC when the coverage screen ran. [NASA announced the end of new Suomi NPP data delivery on November 2, 2026](https://www.earthdata.nasa.gov/data/alerts-outages/suomi-npp-observations-cease-november-2-2026). Check NOAA-20 for the same-satellite 2025–2026 comparison once its 2026 image arrives.
 
-After access works:
+### 2025 metro brightness results
+
+The Code Editor run reproduced the original Suomi NPP Dallas result. The table records the event reading minus each pixel's same-satellite control median, summarized over matched cells in each metro box. Radiance changes are in nW/cm²/sr.
+
+| Satellite | Metro | Matched cells | Mean change | Median change |
+| --- | --- | ---: | ---: | ---: |
+| NOAA-20 | Bay Area | 12,622 | +0.74 | +0.24 |
+| NOAA-20 | Los Angeles | 8,922 | +5.58 | +0.94 |
+| NOAA-20 | Dallas–Fort Worth | 19,007 | +0.10 | +1.57 |
+| NOAA-20 | Chicago | 9,638 | −0.97 | −0.84 |
+| NOAA-20 | New York–North Jersey | 9,642 | +0.45 | −0.68 |
+| NOAA-20 | Seattle | 7,775 | −0.48 | −0.40 |
+| NOAA-20 | Washington, DC area | 18,041 | −0.23 | −2.28 |
+| Suomi NPP | Dallas–Fort Worth | 22,340 | −1.14 | −1.54 |
+| Suomi NPP | Washington, DC area | 17,213 | −1.15 | −1.30 |
+
+Los Angeles had the largest positive mean, with a smaller median increase and 46.9% of the test box matched. Both platforms measured lower mean and median brightness than their baselines near DC. The Dallas changes had opposite signs between platforms, which observed different times and can cover different cells. The submitted summaries did not include the individual ordinary-night comparisons. Review those paired results and their cell counts before judging whether a positive shift was unusual. These are observations from one festival night and cannot establish a nationwide or Diwali-caused increase.
+
+### Remaining checks
 
 1. Select several test regions and comparison regions before inspecting anomaly maps. Include regions with differing urban brightness, weather, and geography; avoid selecting only apparent hotspots.
 2. Verify adequate same-night and baseline coverage and determine sensible aggregation scales. Begin with daily observations; do not hide event-night gaps in a multi-day composite.
