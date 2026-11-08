@@ -42,15 +42,16 @@ images.aggregate_array('utc_date').sort().evaluate(function(found, error) {
   var eventOnShared = event.updateMask(shared);
   var excess = eventOnShared.subtract(controls.max()).rename('event_minus_brightest_control');
 
-  var stack = eventOnShared.rename('diwali');
+  var readings = eventOnShared.rename('diwali');
   controlDates.forEach(function(date) {
     var night = ee.Image(controls.filter(ee.Filter.eq('utc_date', date)).first());
-    stack = stack.addBands(night.updateMask(shared).rename('night_' + date.replace(/-/g, '_')));
+    readings = readings.addBands(night.updateMask(shared).rename('night_' + date.replace(/-/g, '_')));
   });
   // The mean of a band containing 0 or 100 gives the percentage above all three.
-  stack = stack.addBands(excess).addBands(excess.gt(0).multiply(100).rename('above_all_controls_pct'));
+  var summaryBands = readings.addBands(excess)
+    .addBands(excess.gt(0).multiply(100).rename('above_all_controls_pct'));
 
-  var stats = stack.reduceRegion({
+  var stats = summaryBands.reduceRegion({
     geometry: region,
     reducer: ee.Reducer.mean().unweighted()
       .combine({reducer2: ee.Reducer.median().unweighted(), sharedInputs: true})
@@ -67,4 +68,18 @@ images.aggregate_array('utc_date').sort().evaluate(function(found, error) {
     max: 5,
     palette: ['#2166ac', '#f7f7f7', '#e7a843']
   }, 'Diwali minus the brightest control at each pixel');
+
+  // Preserve all four readings on the shared analysis grid before projection for display.
+  var exportImage = readings.clip(region)
+    .reproject({crs: event.projection(), scale: 500})
+    .unmask(-9999, false)
+    .toFloat();
+  var downloadUrl = exportImage.getDownloadURL({
+    name: 'los-angeles-2025-10-20-four-night-readings',
+    region: region,
+    crs: 'EPSG:3857',
+    scale: 500,
+    format: 'GEO_TIFF'
+  });
+  print(ui.Label('Download Los Angeles four-night GeoTIFF', {}, downloadUrl));
 });

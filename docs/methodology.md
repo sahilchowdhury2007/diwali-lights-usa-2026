@@ -116,6 +116,10 @@ Los Angeles was brighter by both measures in the three pairs that covered nearly
 
 The [Los Angeles footprint check](../earth-engine/08-check-los-angeles-footprint.js) uses the intersection of the valid pixels on the event date and the three best-covered ordinary nights. The paired counts imply 8,887 to 8,889 shared cells on the same grid. It summarizes all four nights on that shared area and maps the event reading minus the brightest control reading at each pixel. The region was selected after the initial metro screen, and the three controls were selected by coverage. This is an exploratory comparison from one festival night.
 
+The run returned 8,887 shared cells. Diwali had the highest mean radiance, 29.99 nW/cm²/sr compared with 26.81, 23.56, and 24.54 on the three controls in chronological order. Diwali was brighter than all three controls at 5,103 cells (57.4%). Against each cell's own brightest control, the median change was +0.54 and the mean was −1.39 nW/cm²/sr. The largest decreases pulled the mean below zero even though the median cell was brighter. The brightest control can be a different night at each location.
+
+The footprint script also provides a GeoTIFF download. Its four bands store the event reading followed by the readings on September 23, October 7, and October 28 UTC. It uses the shared pixel mask for all four bands and stores missing data as −9999. The Web Mercator display grid can have a different cell count from the 8,887 on the analysis grid.
+
 ### Remaining checks
 
 1. Select several test regions and comparison regions before inspecting anomaly maps. Include regions with differing urban brightness, weather, and geography; avoid selecting only apparent hotspots.
