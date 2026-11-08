@@ -1,4 +1,4 @@
-"""Convert a Dallas or Los Angeles Earth Engine export into dashboard assets."""
+"""Prepare local display assets for the archived Dallas or Los Angeles pilot."""
 
 import argparse
 import hashlib
@@ -12,7 +12,7 @@ from rasterio.warp import transform
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "public" / "data"
+DATA = ROOT / "data" / "raw" / "pilots"
 COLORS = ["#7d5636", "#d4924c", "#ffdda2"]
 LIMIT = 5
 OBSERVATIONS = {
@@ -110,16 +110,14 @@ def main():
         encoding="utf-8",
     )
 
-    manifest_path = DATA / "manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     pilot = {
         **{key: value for key, value in config.items() if key not in ("slug", "bounds")},
         "date": "2025-10-20",
         "status": "ready",
         "productDateUtc": "2025-10-21",
         "raster": {
-            "url": asset + ".png",
-            "pixelsUrl": asset + "-pixels.json",
+            "url": output.name + ".png",
+            "pixelsUrl": output.name + "-pixels.json",
             "coordinates": coordinates,
             "colors": COLORS,
             "limit": LIMIT,
@@ -127,16 +125,8 @@ def main():
             "inputSha256": hashlib.sha256(args.geotiff.read_bytes()).hexdigest(),
         },
     }
-    year = manifest["years"]["2025"]
-    year["status"] = "pilot_ready"
-    for index, item in enumerate(year["observations"]):
-        if (item["date"], item.get("name")) == (pilot["date"], pilot["name"]):
-            year["observations"][index] = pilot
-            break
-    else:
-        year["observations"].append(pilot)
-    manifest_path.write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8",
+    output.with_name(output.name + "-metadata.json").write_text(
+        json.dumps(pilot, indent=2, ensure_ascii=False) + "\n", encoding="utf-8",
     )
     print(f"Wrote {width} × {height} overlay with {valid.sum():,} valid display cells.")
 

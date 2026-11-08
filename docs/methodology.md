@@ -171,11 +171,11 @@ The national **Stronger increases** layer uses the +0.5 cutoff with the same col
 
 Render geographically referenced raster exports. A glow may be a display treatment for a validated positive radiance anomaly, but it must preserve the underlying scale and missing-data mask. Excess light is not the number of celebrations. Avoid independently normalizing each year or date to its own maximum. Keep no-observation, insufficient-baseline, no-positive-excess, and not-yet-published states distinct in the eventual layer and hover inspection.
 
-The base U.S. map includes views for the lower 48, Alaska, Hawaii, and the Western Aleutians. The national layer uses a common NOAA-20 control-median baseline. The city pilots retain their original baselines.
+The base U.S. map includes views for the lower 48, Alaska, Hawaii, and the Western Aleutians. The national layer uses a common NOAA-20 control-median baseline. City labels are geographic references. The earlier metro pilots are documented separately above.
 
-## Static data contract for initial UI
+## Dashboard data
 
-`public/data/manifest.json` stores the local festival date and ready observations for each year. A ready observation specifies its UTC product date, overpass window, source record, analysis summary, and display raster. Corners are ordered top-left, top-right, bottom-right, bottom-left. The pixel data uses row-major order with event radiance, baseline median, signed change, and control count. Missing cells are null.
+`public/data/manifest.json` stores the local festival date for each year. A published national comparison specifies its UTC product date, satellite, display thresholds, and regional rasters. Raster corners are ordered top-left, top-right, bottom-right, bottom-left. The pixel data uses row-major order with mean radiance change and matched coverage fraction. Missing cells are null.
 
 ## Delivery sequence
 

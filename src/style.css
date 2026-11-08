@@ -39,10 +39,9 @@ h2 { font-size: 20px; font-weight: 500; letter-spacing: -0.5px; margin: 0 0 12px
 .event-row { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); margin: 13px 0 28px; }
 .event-row strong { font-weight: 400; color: #c4cbd3; }
 select { appearance: auto; width: 100%; background: #171d27; border: 1px solid #323947; border-radius: 4px; padding: 11px; color: #dedfe2; font-size: 11px; margin-top: 11px; }
-.observation-picker { margin-bottom: 16px; }
 .layer-picker { margin-bottom: 18px; }
-.observation-marker { border: 1px solid #9a8665; border-radius: 4px; background: #141b26; color: #f1dcc0; padding: 5px 7px; font-size: 10px; white-space: nowrap; }
-.observation-marker::after { content: ''; position: absolute; left: calc(50% - 2px); bottom: -5px; width: 4px; height: 4px; border-radius: 50%; background: var(--amber); }
+.maplibregl-marker.city-label { pointer-events: none; user-select: none; border-radius: 3px; background: #0d141ee0; color: #e1e9f2; padding: 2px 4px; font: 500 11px/1.2 system-ui, sans-serif; white-space: nowrap; }
+.city-label::after { content: ''; position: absolute; left: calc(50% - 1.5px); bottom: -3px; width: 3px; height: 3px; border-radius: 50%; background: #becddd; }
 .rule { height: 1px; background: var(--line); margin: 25px 0; }
 .layer-label { display: flex; gap: 8px; align-items: center; font-size: 10px; margin: 16px 0 23px; }
 .light-dot { border-radius: 50%; background: #ffcf87; width: 7px; height: 7px; box-shadow: 0 0 9px #d29a56; }

@@ -130,7 +130,9 @@ def main():
 
     manifest_path = DATA / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    manifest["years"][str(args.year)]["national"] = {
+    year = manifest["years"][str(args.year)]
+    year["status"] = "national_ready"
+    year["national"] = {
         "date": date,
         "productDateUtc": product_date,
         "satellite": "NOAA-20",

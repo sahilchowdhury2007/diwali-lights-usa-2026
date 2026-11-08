@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The dashboard includes 2025 and 2026 views and a date slider. Select **United States** under **Observation** on the 2025 festival date for the national NOAA-20 comparison. The satellite layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. The city markers open the Dallas–Fort Worth and Los Angeles pilots, which use separate baselines. Click a map cell to inspect the data. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
+The dashboard includes 2025 and 2026 views and a date slider. The 2025 festival date opens the national NOAA-20 comparison. The satellite layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. City labels help orient the map as you zoom. Click a map cell to inspect the data. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
 
 ## Run locally
 
@@ -41,9 +41,9 @@ Set `CREATE_EXPORTS = true` to create four GeoTIFF tasks for the lower 48, Hawai
 
 With the four GeoTIFFs in one directory, run `python scripts/prepare-national.py --year 2025 "path-to-export-directory"` using the dependencies below. The converter verifies the two data bands and shared grid, then generates both map layers and the pixel readings. The brightness layer shows increases where matched coverage reaches 25%. The coverage layer includes cells at 0%.
 
-## Rebuild the metro overlays
+## Reproduce the metro pilots locally
 
-Run [the export script](earth-engine/05-export-dallas-pilot.js) in Earth Engine and download the GeoTIFF. Convert it to the dashboard's PNG overlay and pixel data with Python.
+Run [the export script](earth-engine/05-export-dallas-pilot.js) in Earth Engine and download the GeoTIFF. Convert it to a PNG overlay and pixel data with Python.
 
 ```powershell
 python -m pip install rasterio numpy Pillow
@@ -51,7 +51,7 @@ python scripts/prepare-dallas-pilot.py "path-to-export.tiff"
 python scripts/prepare-dallas-pilot.py --metro los-angeles "path-to-la-four-night-export.tiff"
 ```
 
-The Los Angeles export comes from the [footprint script](earth-engine/08-check-los-angeles-footprint.js). The converter validates each export and records its SHA-256. It writes the display assets to `public/data/2025` and updates the manifest. Original GeoTIFFs can be kept in the ignored `data/raw` directory.
+The Los Angeles export comes from the [footprint script](earth-engine/08-check-los-angeles-footprint.js). The converter validates each export and writes the overlay, pixel data, and metadata with its SHA-256 under the ignored `data/raw/pilots` directory. These pilot comparisons are separate from the national dashboard.
 
 ## GitHub Pages
 
