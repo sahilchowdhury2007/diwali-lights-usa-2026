@@ -1,7 +1,8 @@
 // Measure NOAA-20 event coverage and preview 5 km radiance changes across the U.S.
 var YEAR = 2025;
 var CREATE_EXPORTS = false;
-var GRID_CRS = 'EPSG:6933';
+// Earth Engine's MODIS sinusoidal projection supports equal-area sampling across all states.
+var GRID_CRS = 'SR-ORG:6974';
 var GRID_METERS = 5000;
 var GRID_TRANSFORM = [GRID_METERS, 0, 0, 0, -GRID_METERS, 0];
 var MIN_CONTROL_NIGHTS = 3;
@@ -57,6 +58,7 @@ var images = ee.ImageCollection('NASA/VIIRS/002/VJ146A2')
   }).filter(ee.Filter.inList('utc_date', dates));
 
 print('Event UTC product date', schedule.event);
+print('Analysis grid', GRID_CRS, GRID_METERS + ' m');
 print('State and district count', states.size());
 images.aggregate_array('utc_date').sort().evaluate(function(found, error) {
   if (error) {
