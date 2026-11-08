@@ -120,6 +120,21 @@ The run returned 8,887 shared cells. Diwali had the highest mean radiance, 29.99
 
 The footprint script also provides a GeoTIFF download. Its four bands store the event reading followed by the readings on September 23, October 7, and October 28 UTC. It uses the shared pixel mask for all four bands and stores missing data as −9999. The Web Mercator display grid can have a different cell count from the 8,887 on the analysis grid.
 
+### 2025 national coverage screen
+
+The [NOAA-20 national screen](../earth-engine/09-screen-united-states.js) found matched samples in all 50 states and DC for the October 21 UTC product. A match requires usable radiance on the event date and at least three usable control dates at the same location. The run returned 116,498 matches out of 466,521 geographic grid samples. Seven jurisdictions had matches at half or more of their sample locations, and twelve had matches at fewer than one in ten. These percentages describe locations sampled on a 0.05° grid, whose cells vary in physical area with latitude.
+
+| Jurisdiction | Usable event samples | Matched samples |
+| --- | ---: | ---: |
+| Alabama | 99.5% | 81.8% |
+| California | 63.0% | 56.8% |
+| Hawaii | 51.3% | 30.0% |
+| Alaska | 21.3% | 2.4% |
+| West Virginia | 99.1% | 4.7% |
+| Oklahoma | 84.7% | 0.7% |
+
+DC had six matches among seven sampled locations. West Virginia had usable event readings at nearly all sampled locations, but few met the control requirement. For the national map, the regional GeoTIFFs preserve both signed brightness change and the fraction of each cell with matched coverage so that areas with sparse observations remain distinguishable.
+
 ### Remaining checks
 
 1. Select several test regions and comparison regions before inspecting anomaly maps. Include regions with differing urban brightness, weather, and geography; avoid selecting only apparent hotspots.
