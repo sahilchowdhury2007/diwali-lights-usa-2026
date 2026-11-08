@@ -57,6 +57,10 @@ function App() {
   const coverageMode = Boolean(nationalView && satelliteLayer === 'coverage');
   const strongMode = nationalView?.strongChangeMin != null && satelliteLayer === 'strong';
   const layerUrlKey = coverageMode ? 'coverageUrl' : strongMode ? 'strongChangeUrl' : 'url';
+  const layerDescription = !nationalView ? null
+    : coverageMode ? 'Shows how much of each map cell has enough usable satellite readings to compare Diwali with ordinary nights. Use this layer to spot gaps in the data.'
+      : strongMode ? `Shows only increases above +${number.format(nationalView.strongChangeMin)} ${unit}. This makes larger increases easier to spot.`
+        : `Shows where Diwali was brighter than the median of ordinary nights. Gold appears where at least ${percent.format(nationalView.minCoverage)} of a cell has usable comparisons.`;
   const displayed = nationalView?.tiles ?? emptyTiles;
   const hasRaster = displayed.length > 0;
   const legend = displayed[0]?.raster;
@@ -222,11 +226,12 @@ function App() {
           <div className="rule" />
           {nationalView ? <div className="layer-picker">
             <label className="field-label" htmlFor="satellite-layer">SATELLITE LAYER</label>
-            <select id="satellite-layer" value={coverageMode ? 'coverage' : strongMode ? 'strong' : 'change'} onChange={event => setSatelliteLayer(event.target.value)}>
+            <select id="satellite-layer" aria-describedby="layer-description" value={coverageMode ? 'coverage' : strongMode ? 'strong' : 'change'} onChange={event => setSatelliteLayer(event.target.value)}>
               <option value="change">Brighter than baseline</option>
               {nationalView.strongChangeMin != null && <option value="strong">Stronger increases</option>}
               <option value="coverage">Matched coverage</option>
             </select>
+            <p className="layer-description" id="layer-description" aria-live="polite">{layerDescription}</p>
           </div> : <>
             <span className="field-label">SATELLITE LAYER</span>
             <div className="layer-label"><span className="light-dot" /> Brighter than baseline <span className="pill">SATELLITE</span></div>

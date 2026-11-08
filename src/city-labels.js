@@ -50,12 +50,22 @@ export function addCityLabels(map) {
     }
   }
 
+  function refreshLabelSizes() {
+    for (const item of labels) {
+      item.width = item.label.offsetWidth;
+      item.height = item.label.offsetHeight;
+    }
+    placeLabels();
+  }
+
   map.on('move', placeLabels);
   map.on('resize', placeLabels);
+  document.fonts.addEventListener('loadingdone', refreshLabelSizes);
   placeLabels();
   return () => {
     map.off('move', placeLabels);
     map.off('resize', placeLabels);
+    document.fonts.removeEventListener('loadingdone', refreshLabelSizes);
     labels.forEach(({ marker }) => marker.remove());
   };
 }

@@ -22,7 +22,7 @@ npm run build
 npm run preview
 ```
 
-The app is static. It reads `public/data/manifest.json`; no API credentials belong in the browser. The basemap uses bundled U.S. Census-derived state/territory boundaries from U.S. Atlas (2017). The geographic backdrop is context, not satellite observations. Google Fonts needs internet access, with local font fallbacks if unavailable.
+The app is static. It reads `public/data/manifest.json`; no API credentials belong in the browser. The basemap uses bundled U.S. Census-derived state/territory boundaries from U.S. Atlas (2017). The geographic backdrop is context, not satellite observations. The site uses Comic Sans when installed, with Comic Neue from Google Fonts as a fallback.
 
 Regenerate the tracked basemap geometry after changing the U.S. Atlas dependency with `node scripts/prepare-geography.mjs`. Its license is included alongside the geometry.
 

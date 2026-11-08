@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Libre+Caslon+Display&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,400&display=swap');
 
-:root { font-family: 'DM Sans', sans-serif; color: #eeeae2; background: #0c1017; font-synthesis: none; --muted: #88929f; --amber: #efbe7b; --line: #272d37; }
+:root { font-family: 'Comic Sans MS', 'Comic Sans', 'Comic Neue', cursive; color: #eeeae2; background: #0c1017; font-synthesis: none; --muted: #88929f; --amber: #efbe7b; --line: #272d37; }
 * { box-sizing: border-box; }
 body { margin: 0; }
 button, select, input { font: inherit; }
@@ -20,7 +20,7 @@ main { max-width: 1600px; margin: auto; padding: 0 4.2%; }
 .intro { display: flex; justify-content: space-between; align-items: end; padding: 57px 0 43px; gap: 35px; }
 .eyebrow, .field-label { font-size: 9px; letter-spacing: 1.8px; font-weight: 600; }
 .eyebrow { color: var(--amber); margin: 0 0 19px; }
-h1 { font-family: 'Libre Caslon Display', Georgia, serif; font-weight: 400; font-size: clamp(52px, 5.5vw, 79px); line-height: 0.99; letter-spacing: -1.5px; margin: 0; }
+h1 { font-weight: 400; font-size: clamp(52px, 5.5vw, 79px); line-height: 0.99; letter-spacing: -1.5px; margin: 0; }
 h1 em { color: var(--amber); font-weight: 400; }
 .intro-copy { max-width: 330px; padding-bottom: 2px; }
 .intro-copy p { color: #a5adb9; font-size: 13px; line-height: 1.8; margin: 0 0 19px; }
@@ -40,7 +40,8 @@ h2 { font-size: 20px; font-weight: 500; letter-spacing: -0.5px; margin: 0 0 12px
 .event-row strong { font-weight: 400; color: #c4cbd3; }
 select { appearance: auto; width: 100%; background: #171d27; border: 1px solid #323947; border-radius: 4px; padding: 11px; color: #dedfe2; font-size: 11px; margin-top: 11px; }
 .layer-picker { margin-bottom: 18px; }
-.maplibregl-marker.city-label { pointer-events: none; user-select: none; border-radius: 3px; background: #0d141ee0; color: #e1e9f2; padding: 2px 4px; font: 500 11px/1.2 system-ui, sans-serif; white-space: nowrap; }
+.layer-description { margin: 9px 0 0; color: #aab6c6; font-size: 12px; line-height: 1.5; }
+.maplibregl-marker.city-label { pointer-events: none; user-select: none; border-radius: 3px; background: #0d141ee0; color: #e1e9f2; padding: 2px 4px; font-size: 11px; line-height: 1.2; white-space: nowrap; }
 .city-label::after { content: ''; position: absolute; left: calc(50% - 1.5px); bottom: -3px; width: 3px; height: 3px; border-radius: 50%; background: #becddd; }
 .rule { height: 1px; background: var(--line); margin: 25px 0; }
 .layer-label { display: flex; gap: 8px; align-items: center; font-size: 10px; margin: 16px 0 23px; }
@@ -57,13 +58,14 @@ input:disabled { cursor: default; opacity: 0.35; }
 .map-column { min-width: 0; display: flex; flex-direction: column; }
 .map-stage { min-height: 475px; flex: 1; position: relative; isolation: isolate; background: #10151e; }
 .map { position: absolute; inset: 0; }
+.map.maplibregl-map { font-family: inherit; }
 .map-top { position: absolute; top: 23px; left: 23px; display: flex; gap: 15px; align-items: center; pointer-events: none; }
 .map-tag { background: #131922ed; border: 1px solid #343c47; color: #c3cbd4; font-size: 7px; letter-spacing: 1.1px; padding: 8px; border-radius: 3px; }
 .map-tag i { background: var(--amber); width: 4px; height: 4px; }
 .map-date { font-size: 10px; text-shadow: 0 1px 5px #000; color: #b4becb; }
 .empty-map { position: absolute; inset: 0; margin: auto; width: min(340px, 77%); height: fit-content; text-align: center; background: #0e141ce8; border: 1px solid #343c48; padding: 25px 25px 22px; border-radius: 8px; box-shadow: 0 18px 60px #0005; pointer-events: none; }
 .empty-icon { color: #d2b38c; font-size: 34px; }
-.empty-map h3 { font-family: 'Libre Caslon Display', Georgia, serif; font-size: 29px; font-weight: 400; margin: 9px 0 11px; letter-spacing: -0.4px; }
+.empty-map h3 { font-size: 29px; font-weight: 400; margin: 9px 0 11px; letter-spacing: -0.4px; }
 .empty-map p { font-size: 11px; line-height: 1.8; color: #a4afbc; margin: 0; }
 .empty-map > span:last-child { display: block; color: #c7af8e; font-size: 7px; letter-spacing: 1.6px; margin-top: 18px; }
 .map-legend { position: absolute; bottom: 27px; left: 24px; width: 155px; background: #0e141cee; padding: 12px; border-radius: 5px; pointer-events: none; }
@@ -92,7 +94,7 @@ input:disabled { cursor: default; opacity: 0.35; }
 .method { border-top: 1px solid var(--line); padding: 32px 0 35px; }
 .method-toggle { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0; text-align: left; border: 0; background: none; }
 .method-toggle .eyebrow { display: block; font-size: 8px; margin-bottom: 12px; }
-.method-toggle h2 { font-family: 'Libre Caslon Display', Georgia, serif; font-size: 29px; font-weight: 400; margin: 0; }
+.method-toggle h2 { font-size: 29px; font-weight: 400; margin: 0; }
 .expand { font-size: 23px; color: #c1aa88; padding: 15px; }
 .method-copy { color: #9da8b7; max-width: 800px; font-size: 12px; line-height: 1.9; padding-top: 20px; }
 .method-copy a { color: var(--amber); }
