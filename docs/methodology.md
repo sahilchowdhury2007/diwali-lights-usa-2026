@@ -59,6 +59,8 @@ The [Dallas export script](../earth-engine/05-export-dallas-pilot.js) prepares a
 
 Overnight playback is deferred while the MVP tests measured brightness against a baseline. Tracking lights that switch off or stay on requires repeat readings of the same place within one night, aligned and screened for comparable conditions.
 
+The [metro coverage screen](../earth-engine/06-screen-metro-coverage.js) checks eight mainland test boxes on Suomi NPP and NOAA-20 separately. It reports raw availability, usable event pixels, and pixels with both a usable event reading and at least three usable control nights from the same platform. The 2025 dates and filters match the Dallas pilot. The 2026 screen uses the November 9 UTC candidate product and five earlier product dates after Sunday evenings. Use the coverage counts to choose follow-up regions before looking at brightness changes. Verify local overpass times before assigning event and control observations to nights. Two satellites observing the same festival night provide a cross-check, while a second year tests repeatability across festival nights.
+
 After access works:
 
 1. Select several test regions and comparison regions before inspecting anomaly maps. Include regions with differing urban brightness, weather, and geography; avoid selecting only apparent hotspots.
