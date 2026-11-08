@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as maplibre from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
@@ -9,6 +9,7 @@ maplibre.setWorkerUrl(workerUrl);
 
 const base = import.meta.env.BASE_URL;
 const dates = { 2025: '2025-10-20', 2026: '2026-11-08' };
+const usOverview = 'us-overview';
 const locations = {
   'United States': [[-125, 24], [-66, 50]],
   'Alaska': [[-170, 51], [-130, 72]],
@@ -32,6 +33,10 @@ function formatDate(date) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
 }
 
+function baselineName(record) {
+  return record?.baselineLabel ?? 'Median of usable control nights';
+}
+
 function App() {
   const [year, setYear] = useState(2025);
   const [offset, setOffset] = useState(0);
@@ -46,12 +51,19 @@ function App() {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const date = dateAtOffset(year, offset);
-  const observations = manifest?.years?.[year]?.observations?.filter(
-    item => item.date === date && item.status === 'ready',
-  ) ?? [];
+  const observations = useMemo(() => manifest?.years?.[year]?.observations?.filter(
+    item => item.date === date && item.status === 'ready' && item.raster?.url,
+  ) ?? [], [manifest, year, date]);
+  const showOverview = year === 2025 && observationName === usOverview;
   const record = observations.find(item => item.name === observationName) ?? observations[0];
-  const hasRaster = Boolean(record?.raster?.url);
-  const baselineLabel = record?.baselineLabel ?? 'Median of usable control nights';
+  const displayed = useMemo(() => showOverview ? observations : record ? [record] : [],
+    [showOverview, observations, record]);
+  const hasRaster = displayed.length > 0;
+  const baselineLabel = baselineName(record);
+  const selectObservation = useCallback(name => {
+    setObservationName(name);
+    setArea(name === usOverview ? 'United States' : 'Observation area');
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -100,62 +112,93 @@ function App() {
 
   useEffect(() => {
     if (!map.current || !mapReady) return;
-    const coordinates = record?.raster?.coordinates;
+    const coordinates = showOverview ? null : record?.raster?.coordinates;
     const bounds = area === 'Observation area' && coordinates
       ? [coordinates[3], coordinates[1]]
       : locations[area] ?? locations['United States'];
     map.current.fitBounds(bounds, { padding: 42, duration: 700 });
-  }, [area, record, mapReady]);
+  }, [area, record, mapReady, showOverview]);
 
   useEffect(() => {
     const instance = map.current;
     if (!instance || !mapReady) return;
-    if (instance.getLayer('excess-light')) instance.removeLayer('excess-light');
-    if (instance.getSource('excess-light')) instance.removeSource('excess-light');
-    if (!hasRaster) return;
-    // Export paths are relative to the data directory, so project Pages URLs work.
-    instance.addSource('excess-light', { type: 'image', url: dataUrl(record.raster.url), coordinates: record.raster.coordinates });
-    instance.addLayer({ id: 'excess-light', type: 'raster', source: 'excess-light', paint: { 'raster-opacity': opacity / 100, 'raster-fade-duration': 0, 'raster-resampling': 'nearest' } });
-  }, [hasRaster, record, mapReady]);
+    const layers = displayed.map(({ raster }, index) => {
+      const id = `excess-light-${index}`;
+      instance.addSource(id, { type: 'image', url: dataUrl(raster.url), coordinates: raster.coordinates });
+      instance.addLayer({ id, type: 'raster', source: id, paint: { 'raster-fade-duration': 0, 'raster-resampling': 'nearest' } });
+      return id;
+    });
+    const markers = showOverview ? displayed.map(({ name, raster }) => {
+      const [west, north] = raster.coordinates[0];
+      const [east, south] = raster.coordinates[2];
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'observation-marker';
+      button.textContent = name;
+      button.setAttribute('aria-label', `View ${name} observation`);
+      button.addEventListener('click', event => {
+        event.stopPropagation();
+        selectObservation(name);
+      });
+      return new maplibre.Marker({ element: button, anchor: 'bottom' })
+        .setLngLat([(west + east) / 2, (south + north) / 2]).addTo(instance);
+    }) : [];
+    return () => {
+      markers.forEach(marker => marker.remove());
+      if (map.current !== instance) return;
+      layers.forEach(id => {
+        instance.removeLayer(id);
+        instance.removeSource(id);
+      });
+    };
+  }, [displayed, mapReady, selectObservation, showOverview]);
 
   useEffect(() => {
-    if (mapReady && map.current?.getLayer('excess-light')) map.current.setPaintProperty('excess-light', 'raster-opacity', opacity / 100);
-  }, [opacity, mapReady]);
+    if (!mapReady || !map.current) return;
+    displayed.forEach((_, index) => map.current.setPaintProperty(`excess-light-${index}`, 'raster-opacity', opacity / 100));
+  }, [displayed, opacity, mapReady]);
 
   useEffect(() => {
     const instance = map.current;
-    const raster = record?.raster;
-    if (!instance || !mapReady || !raster?.pixelsUrl) return;
+    if (!instance || !mapReady || !displayed.length) return;
     const controller = new AbortController();
     const popup = new maplibre.Popup({ maxWidth: '240px', className: 'reading-popup' });
-    let grid;
-    let failed = false;
-    fetch(dataUrl(raster.pixelsUrl), { signal: controller.signal })
-      .then(response => { if (!response.ok) throw new Error('Pixel readings unavailable'); return response.json(); })
-      .then(data => { grid = data; })
-      .catch(error => { if (error.name !== 'AbortError') failed = true; });
-
-    const topLeft = maplibre.MercatorCoordinate.fromLngLat(raster.coordinates[0]);
-    const bottomRight = maplibre.MercatorCoordinate.fromLngLat(raster.coordinates[2]);
+    const readings = displayed.filter(item => item.raster.pixelsUrl).map(item => {
+      const { raster } = item;
+      const reading = {
+        item,
+        topLeft: maplibre.MercatorCoordinate.fromLngLat(raster.coordinates[0]),
+        bottomRight: maplibre.MercatorCoordinate.fromLngLat(raster.coordinates[2]),
+      };
+      fetch(dataUrl(raster.pixelsUrl), { signal: controller.signal })
+        .then(response => { if (!response.ok) throw new Error('Pixel readings unavailable'); return response.json(); })
+        .then(data => { reading.grid = data; })
+        .catch(error => { if (error.name !== 'AbortError') reading.failed = true; });
+      return reading;
+    });
     function inspect({ lngLat }) {
       const point = maplibre.MercatorCoordinate.fromLngLat(lngLat);
+      const reading = readings.find(({ topLeft, bottomRight }) =>
+        point.x >= topLeft.x && point.x < bottomRight.x && point.y >= topLeft.y && point.y < bottomRight.y);
+      if (!reading) return;
+      const { topLeft, bottomRight, grid, failed, item } = reading;
       const x = (point.x - topLeft.x) / (bottomRight.x - topLeft.x);
       const y = (point.y - topLeft.y) / (bottomRight.y - topLeft.y);
-      if (x < 0 || x >= 1 || y < 0 || y >= 1) return;
       const cell = grid?.cells[Math.floor(y * grid.height) * grid.width + Math.floor(x * grid.width)];
       let text = failed ? 'Pixel readings unavailable.' : 'Loading pixel readings…';
       if (grid) {
         text = cell
-          ? `Observed: ${number.format(cell[0])} ${unit}\n${baselineLabel}: ${number.format(cell[1])} ${unit}\nChange: ${changeNumber.format(cell[2])} ${unit}\nUsable baseline nights: ${cell[3]}`
+          ? `Observed: ${number.format(cell[0])} ${unit}\n${baselineName(item)}: ${number.format(cell[1])} ${unit}\nChange: ${changeNumber.format(cell[2])} ${unit}\nUsable baseline nights: ${cell[3]}`
           : 'No usable comparison at this location.';
       }
-      popup.setLngLat(lngLat).setText(text).addTo(instance);
+      popup.setLngLat(lngLat).setText(showOverview ? `${item.name}\n${text}` : text).addTo(instance);
     }
     instance.on('click', inspect);
     return () => { controller.abort(); instance.off('click', inspect); popup.remove(); };
-  }, [mapReady, record, baselineLabel]);
+  }, [mapReady, displayed, showOverview]);
 
-  const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index' : hasRaster ? `${record.name} pilot` : 'No processed observation';
+  const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index'
+    : hasRaster && showOverview ? 'United States coverage' : hasRaster ? `${record.name} pilot` : 'No processed observation';
   const emptyTitle = dataError ? 'Data index unavailable' : 'No satellite observation';
   const emptyMessage = dataError
     ? 'The observation index could not load.'
@@ -183,18 +226,17 @@ function App() {
           <label className="field-label" id="year-label">DIWALI YEAR</label>
           <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => setYear(value)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
           <div className="event-row"><span>Festival date</span><strong>{formatDate(dates[year])}</strong></div>
-          {observations.length > 1 && <div className="observation-picker">
+          {(observations.length > 1 || (year === 2025 && observations.length > 0)) && <div className="observation-picker">
             <label className="field-label" htmlFor="observation">OBSERVATION</label>
-            <select id="observation" value={record.name} onChange={event => {
-              setObservationName(event.target.value);
-              setArea('Observation area');
-            }}>
+            <select id="observation" value={showOverview ? usOverview : record.name}
+              onChange={event => selectObservation(event.target.value)}>
+              {year === 2025 && <option value={usOverview}>United States</option>}
               {observations.map(item => <option key={item.name}>{item.name}</option>)}
             </select>
           </div>}
           <label className="field-label" htmlFor="area">MAP VIEW</label>
           <select id="area" value={area} onChange={event => setArea(event.target.value)}>
-            <option value="Observation area">{record?.name ?? 'Observation area'}</option>
+            <option value="Observation area">{showOverview ? 'Observation area' : record?.name ?? 'Observation area'}</option>
             {Object.keys(locations).map(name => <option key={name}>{name}</option>)}
           </select>
           <div className="rule" />
@@ -204,7 +246,10 @@ function App() {
           <input id="opacity" type="range" min="10" max="100" value={opacity} disabled={!hasRaster} onChange={event => setOpacity(Number(event.target.value))} />
           <div className="layer-note">{hasRaster ? 'Click a map cell for its reading and baseline.' : 'Layer opacity is available for processed observations.'}</div>
           <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
-            {hasRaster && record.summary ? <>
+            {showOverview && hasRaster ? <>
+              <p>{observations.map(item => item.name).join(' and ')} have published comparisons. Each uses its own baseline.</p>
+              <p>Select a city marker to zoom to its readings.</p>
+            </> : hasRaster && record.summary ? <>
               <p>Mean {changeNumber.format(record.summary.mean)} · median {changeNumber.format(record.summary.median)} {unit}</p>
               <p>{baselineLabel}{record.satellite ? ` · ${record.satellite}` : ''}</p>
               <p>{number.format(record.summary.count)} compared cells on the analysis grid</p>
@@ -217,7 +262,7 @@ function App() {
 
         <div className="map-column">
           <div className="map-stage">
-            <div ref={mapContainer} className="map" role="region" aria-label={hasRaster ? `${record.name} measured nighttime brightness change` : 'United States basemap'} />
+            <div ref={mapContainer} className="map" role="region" aria-label={hasRaster ? `${showOverview ? 'United States' : record.name} measured nighttime brightness change` : 'United States basemap'} />
             <div className="map-top"><span className="map-tag"><i /> NASA BLACK MARBLE</span><span className="map-date">{formatDate(date)}</span></div>
             {!hasRaster && <div className="empty-map"><span className="empty-icon">✧</span><h3>{emptyTitle}</h3><p>{emptyMessage}</p></div>}
             {mapError && <p className="map-error" role="status">Some map resources could not load. Check your internet connection and WebGL support.</p>}

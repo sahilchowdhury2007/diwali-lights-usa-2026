@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The dashboard includes 2025 and 2026 views and a date slider. The 2025 observations show Dallas–Fort Worth against its control median and Los Angeles against its brightest control at each pixel. Click a map cell to see the event reading, baseline, change, and number of usable control nights. See the [2025 results](docs/methodology.md#2025-metro-brightness-results).
+The dashboard includes 2025 and 2026 views and a date slider. Select **United States** under **Observation** on the 2025 festival date to see the published areas together. Dallas–Fort Worth uses its control median and Los Angeles uses its brightest control at each pixel. Click a city marker to open its observation or a map cell to inspect the reading. See the [2025 results](docs/methodology.md#2025-metro-brightness-results).
 
 ## Run locally
 
@@ -32,6 +32,10 @@ Regenerate the tracked basemap geometry after changing the U.S. Atlas dependency
 2. Run `earth-engine/01-check-coverage.js` in the Code Editor. It inspects daily image availability and usable pixel counts in a small test region. The optional CSV export must be started separately from the Tasks panel.
 3. Run the [metro coverage screen](earth-engine/06-screen-metro-coverage.js) with `YEAR = 2025` to reproduce the historical coverage results. The Console reports matched coverage by metro and the availability of the November 9 UTC product for 2026.
 4. Run the [metro brightness comparison](earth-engine/07-compare-metro-brightness.js) to compare the 2025 event with ordinary nights from the same satellite. The Console reports each metro's change from its baseline and its comparisons with individual nights.
+
+## Screen the United States
+
+Run the [national coverage script](earth-engine/09-screen-united-states.js) with `YEAR = 2025`. It samples coverage in all 50 states and DC and previews signed NOAA-20 radiance changes on a 5 km equal-area grid. Toggle the matched coverage layer to see the fraction of each display cell with a usable event reading and at least three usable control nights. The brightness layer displays cells where at least 25% of the area inside state boundaries meets that requirement. Set `CREATE_EXPORTS = true` to create four GeoTIFF tasks for the lower 48, Hawaii, and both sides of Alaska's antimeridian. Start them from the Tasks panel when exports are needed.
 
 ## Rebuild the metro overlays
 
