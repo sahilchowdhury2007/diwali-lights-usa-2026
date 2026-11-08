@@ -40,15 +40,18 @@ function App() {
   const [mapError, setMapError] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [area, setArea] = useState('Observation area');
+  const [observationName, setObservationName] = useState('');
   const [opacity, setOpacity] = useState(85);
   const [showMethod, setShowMethod] = useState(false);
   const mapContainer = useRef(null);
   const map = useRef(null);
   const date = dateAtOffset(year, offset);
-  const record = manifest?.years?.[year]?.observations?.find(
+  const observations = manifest?.years?.[year]?.observations?.filter(
     item => item.date === date && item.status === 'ready',
-  );
+  ) ?? [];
+  const record = observations.find(item => item.name === observationName) ?? observations[0];
   const hasRaster = Boolean(record?.raster?.url);
+  const baselineLabel = record?.baselineLabel ?? 'Median of usable control nights';
 
   useEffect(() => {
     const controller = new AbortController();
@@ -143,21 +146,21 @@ function App() {
       let text = failed ? 'Pixel readings unavailable.' : 'Loading pixel readings…';
       if (grid) {
         text = cell
-          ? `Observed: ${number.format(cell[0])} ${unit}\nBaseline: ${number.format(cell[1])} ${unit}\nChange: ${changeNumber.format(cell[2])} ${unit}\nUsable baseline nights: ${cell[3]}`
+          ? `Observed: ${number.format(cell[0])} ${unit}\n${baselineLabel}: ${number.format(cell[1])} ${unit}\nChange: ${changeNumber.format(cell[2])} ${unit}\nUsable baseline nights: ${cell[3]}`
           : 'No usable comparison at this location.';
       }
       popup.setLngLat(lngLat).setText(text).addTo(instance);
     }
     instance.on('click', inspect);
     return () => { controller.abort(); instance.off('click', inspect); popup.remove(); };
-  }, [mapReady, record]);
+  }, [mapReady, record, baselineLabel]);
 
   const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index' : hasRaster ? `${record.name} pilot` : 'No processed observation';
   const emptyTitle = dataError ? 'Data index unavailable' : 'No satellite observation';
   const emptyMessage = dataError
     ? 'The observation index could not load.'
     : year === 2025
-      ? 'Select Diwali to view the October 20 Dallas–Fort Worth pilot.'
+      ? 'Select Diwali to view the October 20 metro observations.'
       : 'Satellite observations for this date are pending.';
 
   return <>
@@ -176,10 +179,19 @@ function App() {
         <aside className="sidebar">
           <p className="eyebrow">01 / EXPLORE THE NIGHT</p>
           <h2>A little extra light.</h2>
-          <p className="small-copy">Explore measured nighttime brightness changes relative to a local baseline. Start with the 2025 Dallas–Fort Worth pilot.</p>
+          <p className="small-copy">Explore measured nighttime brightness in Dallas–Fort Worth and Los Angeles, each compared with its own local baseline.</p>
           <label className="field-label" id="year-label">DIWALI YEAR</label>
           <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => setYear(value)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
           <div className="event-row"><span>Festival date</span><strong>{formatDate(dates[year])}</strong></div>
+          {observations.length > 1 && <div className="observation-picker">
+            <label className="field-label" htmlFor="observation">OBSERVATION</label>
+            <select id="observation" value={record.name} onChange={event => {
+              setObservationName(event.target.value);
+              setArea('Observation area');
+            }}>
+              {observations.map(item => <option key={item.name}>{item.name}</option>)}
+            </select>
+          </div>}
           <label className="field-label" htmlFor="area">MAP VIEW</label>
           <select id="area" value={area} onChange={event => setArea(event.target.value)}>
             <option value="Observation area">{record?.name ?? 'Observation area'}</option>
@@ -194,8 +206,11 @@ function App() {
           <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
             {hasRaster && record.summary ? <>
               <p>Mean {changeNumber.format(record.summary.mean)} · median {changeNumber.format(record.summary.median)} {unit}</p>
+              <p>{baselineLabel}{record.satellite ? ` · ${record.satellite}` : ''}</p>
               <p>{number.format(record.summary.count)} compared cells on the analysis grid</p>
-              <p><a href={record.granuleUrl} target="_blank" rel="noreferrer">NASA overpass record ↗</a></p>
+              {record.summary.aboveControlsPct != null && <p>{number.format(record.summary.aboveControlsPct)}% brighter than all three control nights</p>}
+              {record.granuleUrl && <p><a href={record.granuleUrl} target="_blank" rel="noreferrer">NASA overpass record ↗</a></p>}
+              {record.sourceUrl && <p><a href={record.sourceUrl} target="_blank" rel="noreferrer">Satellite dataset ↗</a></p>}
             </> : <p>{emptyMessage}</p>}
           </div></div>
         </aside>

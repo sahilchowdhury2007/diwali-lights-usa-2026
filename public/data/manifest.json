@@ -8,10 +8,9 @@
       "status": "pilot_ready",
       "observations": [
         {
-          "date": "2025-10-20",
-          "status": "ready",
           "name": "Dallas–Fort Worth",
-          "productDateUtc": "2025-10-21",
+          "satellite": "Suomi NPP",
+          "baselineLabel": "Median of usable control nights",
           "overpassStart": "2025-10-21T08:24:00Z",
           "overpassEnd": "2025-10-21T08:30:00Z",
           "granuleUrl": "https://cmr.earthdata.nasa.gov/search/concepts/G3825772898-LAADS.html",
@@ -20,6 +19,9 @@
             "mean": -1.1411,
             "median": -1.5363
           },
+          "date": "2025-10-20",
+          "status": "ready",
+          "productDateUtc": "2025-10-21",
           "raster": {
             "url": "2025/dallas-fort-worth-2025-10-20.png",
             "pixelsUrl": "2025/dallas-fort-worth-2025-10-20-pixels.json",
@@ -49,6 +51,51 @@
             "limit": 5,
             "validCells": 27163,
             "inputSha256": "aa7caf439ec9cb4fa3da488ad1c81bafa047ac482208b09b2411544074ed5383"
+          }
+        },
+        {
+          "name": "Los Angeles",
+          "satellite": "NOAA-20",
+          "baselineLabel": "Brightest of three control nights",
+          "sourceUrl": "https://developers.google.com/earth-engine/datasets/catalog/NASA_VIIRS_002_VJ146A2",
+          "summary": {
+            "count": 8887,
+            "mean": -1.3918,
+            "median": 0.5424,
+            "aboveControlsPct": 57.4
+          },
+          "date": "2025-10-20",
+          "status": "ready",
+          "productDateUtc": "2025-10-21",
+          "raster": {
+            "url": "2025/los-angeles-2025-10-20.png",
+            "pixelsUrl": "2025/los-angeles-2025-10-20-pixels.json",
+            "coordinates": [
+              [
+                -118.6539743,
+                34.30255142
+              ],
+              [
+                -117.9487968,
+                34.30255142
+              ],
+              [
+                -117.9487968,
+                33.74789119
+              ],
+              [
+                -118.6539743,
+                33.74789119
+              ]
+            ],
+            "colors": [
+              "#348ad0",
+              "#3b4657",
+              "#ffc56e"
+            ],
+            "limit": 5,
+            "validCells": 10990,
+            "inputSha256": "fe1c6fb1a4764ab19d98814932925dad364912d998b553f8ad5e59b7b1531de6"
           }
         }
       ]

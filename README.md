@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The dashboard includes 2025 and 2026 views and a date slider. The 2025 Dallas–Fort Worth snapshot shows measured brightness change from the control median. Click a map cell to see the event reading, baseline, change, and number of usable control nights. See the [coverage and Dallas results](docs/methodology.md#first-diagnostic).
+The dashboard includes 2025 and 2026 views and a date slider. The 2025 observations show Dallas–Fort Worth against its control median and Los Angeles against its brightest control at each pixel. Click a map cell to see the event reading, baseline, change, and number of usable control nights. See the [2025 results](docs/methodology.md#2025-metro-brightness-results).
 
 ## Run locally
 
@@ -33,16 +33,17 @@ Regenerate the tracked basemap geometry after changing the U.S. Atlas dependency
 3. Run the [metro coverage screen](earth-engine/06-screen-metro-coverage.js) with `YEAR = 2025` to reproduce the historical coverage results. The Console reports matched coverage by metro and the availability of the November 9 UTC product for 2026.
 4. Run the [metro brightness comparison](earth-engine/07-compare-metro-brightness.js) to compare the 2025 event with ordinary nights from the same satellite. The Console reports each metro's change from its baseline and its comparisons with individual nights.
 
-## Rebuild the Dallas overlay
+## Rebuild the metro overlays
 
 Run [the export script](earth-engine/05-export-dallas-pilot.js) in Earth Engine and download the GeoTIFF. Convert it to the dashboard's PNG overlay and pixel data with Python.
 
 ```powershell
 python -m pip install rasterio numpy Pillow
 python scripts/prepare-dallas-pilot.py "path-to-export.tiff"
+python scripts/prepare-dallas-pilot.py --metro los-angeles "path-to-la-four-night-export.tiff"
 ```
 
-The converter reads the export's projection and bounds, validates the bands, and records the input SHA-256. It writes the display assets to `public/data/2025` and updates the manifest. The original GeoTIFF can be kept in the ignored `data/raw` directory.
+The Los Angeles export comes from the [footprint script](earth-engine/08-check-los-angeles-footprint.js). The converter validates each export and records its SHA-256. It writes the display assets to `public/data/2025` and updates the manifest. Original GeoTIFFs can be kept in the ignored `data/raw` directory.
 
 ## GitHub Pages
 
