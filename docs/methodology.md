@@ -146,6 +146,8 @@ The four exports contain 204,809 source cells with some matched coverage. Of the
 5. Test the same statistic on non-event placebo dates. Account for testing many pixels/regions and spatial dependence before making significance claims. Assess whether the event signal exceeds ordinary fluctuations and retrieval artifacts.
 6. Publish limitations even if the result is weak. Lock the pipeline and display scale before examining 2026, then repeat with the same settings.
 
+The [ordinary-night check](../earth-engine/10-test-ordinary-nights.js) uses six candidate Monday nights outside the five-date NOAA-20 baseline in Los Angeles and Dallas–Fort Worth. Each pair compares Diwali and one ordinary night with the same baseline on pixels valid for both. It reports signed mean change and the share of pixels above baseline for both nights. For the initial screen, a pair needs at least 70% of the metro's baseline-matched event pixels. The candidate dates span the daylight saving transition, and the screen is descriptive. Verify overpass geometry and local timing before interpreting a possible festival signal.
+
 ## Mapping
 
 Render geographically referenced raster exports. A glow may be a display treatment for a validated positive radiance anomaly, but it must preserve the underlying scale and missing-data mask. Excess light is not the number of celebrations. Avoid independently normalizing each year or date to its own maximum. Keep no-observation, insufficient-baseline, no-positive-excess, and not-yet-published states distinct in the eventual layer and hover inspection.
