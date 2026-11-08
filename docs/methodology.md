@@ -98,7 +98,23 @@ The Code Editor run reproduced the original Suomi NPP Dallas result. The table r
 | Suomi NPP | Dallas–Fort Worth | 22,340 | −1.14 | −1.54 |
 | Suomi NPP | Washington, DC area | 17,213 | −1.15 | −1.30 |
 
-Los Angeles had the largest positive mean, with a smaller median increase and 46.9% of the test box matched. Both platforms measured lower mean and median brightness than their baselines near DC. The Dallas changes had opposite signs between platforms, which observed different times and can cover different cells. The submitted summaries did not include the individual ordinary-night comparisons. Review those paired results and their cell counts before judging whether a positive shift was unusual. These are observations from one festival night and cannot establish a nationwide or Diwali-caused increase.
+Los Angeles had the largest positive mean, with a smaller median increase and 46.9% of the test box matched. Both platforms measured lower mean and median brightness than their baselines near DC. The Dallas changes had opposite signs between platforms, which observed different times and can cover different cells.
+
+### Los Angeles comparisons with individual nights
+
+Each row compares October 21 UTC with an ordinary product date on the pixels usable for both. The pair also requires two valid readings from the other four controls. Changes are in nW/cm²/sr.
+
+| Ordinary UTC date | Matched cells | Paired mean | Paired median |
+| --- | ---: | ---: | ---: |
+| 2025-09-23 | 8,922 | +3.18 | +0.55 |
+| 2025-09-30 | 138 | −0.16 | +0.12 |
+| 2025-10-07 | 8,889 | +6.43 | +2.81 |
+| 2025-10-14 | 14 | +8.68 | +12.82 |
+| 2025-10-28 | 8,920 | +5.44 | +0.96 |
+
+Los Angeles was brighter by both measures in the three pairs that covered nearly the whole baseline sample. The two sparse pairs describe far smaller patches. The Bay Area had four positive paired means out of five and three positive paired medians. Its September 23 comparison covered 12,520 cells and was negative by both measures. In Dallas, NOAA-20's mean was lower in two of its three comparisons with at least 18,000 matched cells and essentially flat in the third. Suomi NPP's Dallas mean was lower in all four usable comparisons.
+
+The [Los Angeles footprint check](../earth-engine/08-check-los-angeles-footprint.js) uses the intersection of the valid pixels on the event date and the three best-covered ordinary nights. The paired counts imply 8,887 to 8,889 shared cells on the same grid. It summarizes all four nights on that shared area and maps the event reading minus the brightest control reading at each pixel. The region was selected after the initial metro screen, and the three controls were selected by coverage. This is an exploratory comparison from one festival night.
 
 ### Remaining checks
 
