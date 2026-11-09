@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The 2025 view opens the national NOAA-20 comparison, with the **Same places over time** playback below the map. It compares the same Lower 48 grid cells at two local hours. The daily layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Click a daily map cell to inspect the data. Use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
+The 2025 view opens the NOAA-20 comparison for the Lower 48, with the **Same places over time** playback below the map. It compares the same grid cells at two local hours. The daily layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Click a daily map cell to inspect the data. Use **Map View** to switch between the Lower 48, Alaska, and Hawaii. The Alaska view includes the Western Aleutians. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
 
 ## Run locally
 
@@ -25,6 +25,10 @@ npm run preview
 The app is static. It reads `public/data/manifest.json`; no API credentials belong in the browser. The basemap uses bundled U.S. Census-derived state/territory boundaries from U.S. Atlas (2017). The geographic backdrop is context, not satellite observations. The site uses Comic Sans when installed, with Comic Neue from Google Fonts as a fallback.
 
 Regenerate the tracked basemap geometry after changing the U.S. Atlas dependency with `node scripts/prepare-geography.mjs`. Its license is included alongside the geometry.
+
+## Contribute
+
+Fork this public repository, create a branch in your fork, and run `npm run build` after making your changes. Open a pull request against `main` with a short description and how you verified the change. [GitHub guide to pull requests from forks](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork)
 
 ## Run the coverage check
 

@@ -115,9 +115,6 @@ input:disabled { cursor: default; opacity: 0.35; }
 .method-copy a { color: var(--amber); }
 footer { display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); color: #8c97a7; font-size: 8px; padding: 25px 4.2%; }
 footer > span:first-child { letter-spacing: 1px; }
-.maplibregl-ctrl-group { background: #1b222d; }
-.maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(0.85); }
-.maplibregl-ctrl-group button + button { border-top: 1px solid #38404d; }
 .maplibregl-ctrl-attrib { font-size: 8px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (min-width: 1450px) { .workspace { grid-template-columns: 320px minmax(0, 1fr); } .sidebar { padding: 32px; } .map-stage { min-height: 530px; } }

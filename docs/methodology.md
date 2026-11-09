@@ -181,7 +181,7 @@ The national **Stronger increases** layer uses the +0.5 cutoff with the same col
 
 Render geographically referenced raster exports. A glow may be a display treatment for a validated positive radiance anomaly, but it must preserve the underlying scale and missing-data mask. Excess light is not the number of celebrations. Avoid independently normalizing each year or date to its own maximum. Keep no-observation, insufficient-baseline, no-positive-excess, and not-yet-published states distinct in the eventual layer and hover inspection.
 
-The base U.S. map includes views for the lower 48, Alaska, Hawaii, and the Western Aleutians. The national layer uses a common NOAA-20 control-median baseline. City labels are geographic references. The earlier metro pilots are documented separately above.
+The base U.S. map includes views for the Lower 48, Alaska (including the Western Aleutians), and Hawaii. The national layer uses a common NOAA-20 control-median baseline. City labels are geographic references. The earlier metro pilots are documented separately above.
 
 ## Dashboard data
 
