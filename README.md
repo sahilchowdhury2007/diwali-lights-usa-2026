@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The 2025 view opens the national NOAA-20 comparison, with the U.S. overnight slider below the same map. The daily layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Click a daily map cell to inspect the data. Use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
+The 2025 view opens the national NOAA-20 comparison, with the Lower 48 playback by local hour below the same map. The daily layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Click a daily map cell to inspect the data. Use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
 
 ## Run locally
 
@@ -65,7 +65,7 @@ Earth Engine processing runs outside the public site. Later, a separately config
 
 The 2025 player uses October 21 UTC Black Marble A1 tiles from NOAA-20, NOAA-21, and Suomi NPP. A1 supplies the observation times, at-sensor radiance, and quality flags needed to compare different overpasses of the same cell. The daily map uses the separate A2 product.
 
-Generate a NASA Earthdata download token and run the commands below from the repository in PowerShell. The token is entered in a hidden prompt and cleared from the environment after the downloader exits. The raw files are stored in the ignored `data/raw/overnight-us-2025` folder. [NASA Earthdata token instructions](https://urs.earthdata.nasa.gov/documentation/for_users/user_token)
+Generate a NASA Earthdata download token and save the Time Zone Boundary Builder 2025b archive in Downloads. Run the commands below from the repository in PowerShell. The token is entered in a hidden prompt and cleared from the environment after the downloader exits. The raw files are stored in the ignored `data/raw/overnight-us-2025` folder. [NASA Earthdata token instructions](https://urs.earthdata.nasa.gov/documentation/for_users/user_token) · [Time zone boundary archive](https://github.com/evansiroky/timezone-boundary-builder/releases/download/2025b/timezones-now.geojson.zip)
 
 ```powershell
 python -m pip install h5py numpy rasterio Pillow
@@ -77,10 +77,10 @@ try {
 } finally {
   Remove-Item Env:EARTHDATA_TOKEN
 }
-python scripts/prepare-us-overnight-2025.py
+python scripts/prepare-us-overnight-2025.py --time-zones "$env:USERPROFILE/Downloads/timezones-now.geojson.zip"
 ```
 
-The builder writes 15-minute frames to `public/data/2025/overnight` and updates `public/data/manifest.json` with source filenames and coverage by state. Run `npm run build` and check the playback before publishing. [2025 playback methodology](docs/methodology.md#2025-us-overnight-playback)
+The builder writes hourly Lower 48 frames to `public/data/2025/overnight` and updates `public/data/manifest.json` with source filenames and coverage by state. Run `npm run build` and check the playback before publishing. [2025 playback methodology](docs/methodology.md#2025-us-overnight-playback)
 
 ### 2026 Phoenix overnight pilot
 

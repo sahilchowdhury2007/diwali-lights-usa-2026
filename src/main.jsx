@@ -55,13 +55,16 @@ function App() {
   const night = yearData?.overnight;
   const overnightPasses = useMemo(() => getOvernightPasses(night), [night]);
   const nationalPlayback = Boolean(night?.frameMinutes && overnightPasses.length);
+  const localPlayback = Number.isInteger(night?.startLocalHour);
   const overnightMode = showOvernight && overnightPasses.length > 0;
+  const localOvernightMode = localPlayback && overnightMode;
   const overnightPass = overnightMode ? overnightPasses[overnightIndex] : null;
   const areaBounds = useMemo(() => {
+    if (localOvernightMode) return locations['United States'];
     if (area !== 'overnight') return locations[area];
     const corners = overnightPasses[0]?.tiles[0]?.raster?.coordinates;
     return corners ? [corners[3], corners[1]] : null;
-  }, [area, overnightPasses]);
+  }, [area, overnightPasses, localOvernightMode]);
   const coverageMode = Boolean(nationalView && satelliteLayer === 'coverage');
   const strongMode = nationalView?.strongChangeMin != null && satelliteLayer === 'strong';
   const layerUrlKey = !overnightMode && coverageMode ? 'coverageUrl' : !overnightMode && strongMode ? 'strongChangeUrl' : 'url';
@@ -158,7 +161,7 @@ function App() {
   useEffect(() => {
     if (!map.current || !mapReady || !areaBounds) return;
     map.current.fitBounds(areaBounds, { padding: 42, duration: 700 });
-  }, [areaBounds, mapReady]);
+  }, [areaBounds, mapReady, localOvernightMode]);
 
   useEffect(() => {
     if (map.current && mapReady && hasRaster) return addCityLabels(map.current);
@@ -263,17 +266,19 @@ function App() {
           <label className="field-label" id="year-label">DIWALI YEAR</label>
           <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => selectYear(value)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
           <div className="event-row"><span>Festival date</span><strong>{formatDate(dates[year])}</strong></div>
-          <label className="field-label" htmlFor="area">MAP VIEW</label>
-          <select id="area" value={area} onChange={event => setArea(event.target.value)}>
-            {area === 'search' && <option value="search" disabled>Search result</option>}
-            {overnightMode && !nationalPlayback && <option value="overnight">{night.region}</option>}
-            {Object.keys(locations).map(name => <option key={name}>{name}</option>)}
-          </select>
-          <PlaceSearch map={map} ready={mapReady} onSelect={() => setArea('search')} />
+          {!localOvernightMode && <>
+            <label className="field-label" htmlFor="area">MAP VIEW</label>
+            <select id="area" value={area} onChange={event => setArea(event.target.value)}>
+              {area === 'search' && <option value="search" disabled>Search result</option>}
+              {overnightMode && !nationalPlayback && <option value="overnight">{night.region}</option>}
+              {Object.keys(locations).map(name => <option key={name}>{name}</option>)}
+            </select>
+            <PlaceSearch map={map} ready={mapReady} onSelect={() => setArea('search')} />
+          </>}
           <div className="rule" />
           {overnightMode ? <div className="layer-picker">
             <span className="field-label">SATELLITE LAYER</span>
-            <p className="layer-description">Colors show how each cell compares with its first comparable reading. The satellites crossed different places at different times.</p>
+            <p className="layer-description">Colors show how each cell compares with its first comparable reading. The satellite measures total light in each cell, so a decrease can have several causes.</p>
           </div> : nationalView ? <div className="layer-picker">
             <label className="field-label" htmlFor="satellite-layer">SATELLITE LAYER</label>
             <select id="satellite-layer" aria-describedby="layer-description" value={coverageMode ? 'coverage' : strongMode ? 'strong' : 'change'} onChange={event => setSatelliteLayer(event.target.value)}>
@@ -292,9 +297,8 @@ function App() {
           <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
             {overnightMode ? <>
               {nationalPlayback ? <>
-                <p>{overnightPasses.length} observation windows · {number.format(night.matchedCells)} of {number.format(night.totalCells)} U.S. grid cells compared.</p>
-                <p>Comparable readings in {night.stateCoverage.filter(state => state.matchedCells > 0).length} of 51 jurisdictions across the states and DC.</p>
-                <p>Use Map View to explore Alaska, Hawaii, and the Western Aleutians.</p>
+                <p>{overnightPasses.length} {localPlayback ? 'local hours' : 'observation windows'} · {number.format(night.matchedCells)} of {number.format(night.totalCells)} grid cells compared.</p>
+                <p>Comparable readings in {night.stateCoverage.filter(state => state.matchedCells > 0).length} of {night.stateCoverage.length} jurisdictions.</p>
               </> : <p>{overnightPasses.length} satellite passes · {number.format(night.matchedCells)} cells compared.</p>}
               {night.sourceLabel && <p>{night.sourceLabel}</p>}
               <p>Cutoff: {number.format(night.cutoff)} {unit}. Viewing geometry can affect brightness between passes.</p>
@@ -341,7 +345,7 @@ function App() {
                 if (!nationalPlayback) setArea('overnight');
                 selectOvernightFrame(overnightIndex);
               }}>
-                {nationalPlayback ? 'U.S. overnight playback' : `Overnight playback · ${night.region}`}
+                {localPlayback ? 'Hourly Lower 48 playback' : `Overnight playback · ${night.region}`}
               </button>
             </div>}
           </div>

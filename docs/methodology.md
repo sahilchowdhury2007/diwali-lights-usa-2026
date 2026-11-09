@@ -137,13 +137,15 @@ The four exports contain 204,809 source cells with some matched coverage. Of the
 
 ### 2025 U.S. overnight playback
 
-The player groups actual observations into 15-minute UTC windows between New York sunset on October 20 and Los Angeles sunrise on October 21. NASA's Collection 2 Black Marble A1 tiles provide per-pixel UTC time, at-sensor radiance, viewing angles, and quality flags from NOAA-20, NOAA-21, and Suomi NPP. The builder samples the nearest source pixel to each cell on an approximately 3 km Web Mercator grid within state boundaries. The reported coverage describes these sampled grid cells. Their physical area varies by latitude. [NASA Black Marble A1 documentation](https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/products/VJ146A1)
+The player groups observations from the Lower 48 by local clock hour. A 2 to 3 AM frame combines readings from 2 to 3 AM Eastern, Central, Mountain, Pacific, and Arizona time. The builder assigns each cell an offset using Time Zone Boundary Builder 2025b geometry derived from OpenStreetMap. October 20–21 was within daylight time for most of the Lower 48, and the `America/Phoenix` region used UTC−7. [Time Zone Boundary Builder 2025b](https://github.com/evansiroky/timezone-boundary-builder/releases/tag/2025b) · [OpenStreetMap contributors](https://www.openstreetmap.org/copyright)
+
+NASA's Collection 2 Black Marble A1 tiles provide per-pixel UTC time, at-sensor radiance, viewing angles, and quality flags from NOAA-20, NOAA-21, and Suomi NPP. The builder samples the nearest source pixel to each cell on a 3 km Web Mercator grid within state boundaries. Coverage describes these sampled cells, whose physical area varies by latitude. [NASA Black Marble A1 documentation](https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/products/VJ146A1)
 
 Each cell needs two quality-screened readings at least 15 minutes apart and within 20° of each other in sensor zenith angle. The reference is the reading with the most eligible later readings, with ties going to the earlier reading. The cutoff is 5 nW/cm²/sr. Blue means a later reading fell below the cutoff after an above-cutoff reference. Gold means both readings were above it. A cell may change brightness in the time between observations. Atmospheric effects, viewing geometry, and cross-satellite calibration can also affect radiance.
 
-Frames show only cells observed during the selected window that passed the comparison checks. An empty area may have no overpass, clouds, or no comparable reading within the window. Use the daily comparison for the separate question of brightness relative to ordinary nights.
+Frames show cells observed during the selected hour that passed the comparison checks. When a cell has two qualifying readings in the same hour, the frame uses the later one. An empty area may have no overpass, clouds, or no comparable reading within that hour. Radiance combines light from many sources. Use the daily comparison for the separate question of brightness relative to ordinary nights.
 
-The published sequence has 19 observed windows between 06:00 and 14:00 UTC. It compares 846,530 of 2,394,043 sampled cells (35.4%) and includes at least one comparison in every state. No cell passed the repeat-reading checks in DC or the western Aleutians. The lower 48 had 752,803 comparable cells, Alaska had 93,164, and Hawaii had 563.
+The sequence has five observed hours from 1 AM to 6 AM local time. It compares 752,803 of 1,476,771 sampled cells (51.0%) across the sequence, with qualifying readings in every contiguous state. DC had no qualifying repeat readings. The 2 to 3 AM and 3 to 4 AM frames have the most coverage, with 637,186 and 686,641 cells respectively.
 
 ### Remaining checks
 
