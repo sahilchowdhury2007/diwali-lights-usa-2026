@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as maplibre from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
@@ -44,7 +44,7 @@ function App() {
   const [satelliteLayer, setSatelliteLayer] = useState('change');
   const [opacity, setOpacity] = useState(85);
   const [showMethod, setShowMethod] = useState(false);
-  const [overnightSelection, setOvernightSelection] = useState(null);
+  const [showOvernight, setShowOvernight] = useState(false);
   const [overnightIndex, setOvernightIndex] = useState(0);
   const mapContainer = useRef(null);
   const map = useRef(null);
@@ -52,14 +52,10 @@ function App() {
   const date = yearData?.eventDate ?? dates[year];
   const national = yearData?.national;
   const nationalView = national?.date === date && national.tiles?.length ? national : null;
-  const strictNight = yearData?.overnight;
-  const previewNight = yearData?.overnightPreview;
-  const strictPasses = useMemo(() => getOvernightPasses(strictNight), [strictNight]);
-  const previewPasses = useMemo(() => getOvernightPasses(previewNight), [previewNight]);
-  const inPreview = overnightSelection === 'preview';
-  const night = inPreview ? previewNight : strictNight;
-  const overnightPasses = inPreview ? previewPasses : strictPasses;
-  const overnightMode = overnightSelection !== null && overnightPasses.length > 0;
+  const night = yearData?.overnight;
+  const overnightPasses = useMemo(() => getOvernightPasses(night), [night]);
+  const nationalPlayback = Boolean(night?.frameMinutes && overnightPasses.length);
+  const overnightMode = showOvernight && overnightPasses.length > 0;
   const overnightPass = overnightMode ? overnightPasses[overnightIndex] : null;
   const areaBounds = useMemo(() => {
     if (area !== 'overnight') return locations[area];
@@ -78,24 +74,22 @@ function App() {
   const legend = displayed[0]?.raster;
 
   function closeOvernight() {
-    setOvernightSelection(null);
+    setShowOvernight(false);
     if (area === 'overnight') setArea('United States');
   }
 
-  function openOvernight(selection) {
-    if (overnightSelection === selection) return;
-    setOvernightIndex(0);
-    setOvernightSelection(selection);
-    setArea('overnight');
-  }
+  const selectOvernightFrame = useCallback(index => {
+    setOvernightIndex(index);
+    setShowOvernight(true);
+  }, []);
 
   function selectYear(nextYear) {
     if (nextYear === year) return;
     setYear(nextYear);
+    setOvernightIndex(0);
     const nextData = manifest?.years?.[nextYear];
     if (!nextData?.national?.tiles?.length && getOvernightPasses(nextData?.overnight).length > 0) {
-      setOvernightIndex(0);
-      setOvernightSelection('strict');
+      setShowOvernight(true);
       setArea('overnight');
     } else {
       closeOvernight();
@@ -242,7 +236,7 @@ function App() {
   }, [mapReady, displayed, nationalView, overnightMode]);
 
   const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index'
-    : overnightMode ? `${inPreview ? 'Exploratory playback' : 'Overnight playback'} · ${night.region}`
+    : overnightMode ? `Overnight playback · ${night.region}`
       : nationalView ? `United States · ${nationalView.satellite}` : 'No processed observation';
   const emptyTitle = dataError ? 'Data index unavailable' : !manifest ? 'Loading observations' : 'Observation pending';
   const emptyMessage = dataError
@@ -272,14 +266,14 @@ function App() {
           <label className="field-label" htmlFor="area">MAP VIEW</label>
           <select id="area" value={area} onChange={event => setArea(event.target.value)}>
             {area === 'search' && <option value="search" disabled>Search result</option>}
-            {overnightMode && <option value="overnight">{night.region}</option>}
+            {overnightMode && !nationalPlayback && <option value="overnight">{night.region}</option>}
             {Object.keys(locations).map(name => <option key={name}>{name}</option>)}
           </select>
           <PlaceSearch map={map} ready={mapReady} onSelect={() => setArea('search')} />
           <div className="rule" />
           {overnightMode ? <div className="layer-picker">
             <span className="field-label">SATELLITE LAYER</span>
-            <p className="layer-description">Compare the same usable cells across satellite passes. The colors show whether a cell was above the brightness cutoff at the first pass and the selected pass.</p>
+            <p className="layer-description">Colors show how each cell compares with its first comparable reading. The satellites crossed different places at different times.</p>
           </div> : nationalView ? <div className="layer-picker">
             <label className="field-label" htmlFor="satellite-layer">SATELLITE LAYER</label>
             <select id="satellite-layer" aria-describedby="layer-description" value={coverageMode ? 'coverage' : strongMode ? 'strong' : 'change'} onChange={event => setSatelliteLayer(event.target.value)}>
@@ -297,9 +291,12 @@ function App() {
           {!overnightMode && <div className="layer-note">{hasRaster ? 'Click a cell to see its coverage and brightness change.' : 'Layer opacity is available for processed observations.'}</div>}
           <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
             {overnightMode ? <>
-              <p>{overnightPasses.length} satellite passes · {number.format(night.matchedCells)} cells compared.</p>
+              {nationalPlayback ? <>
+                <p>{overnightPasses.length} observation windows · {number.format(night.matchedCells)} of {number.format(night.totalCells)} U.S. grid cells compared.</p>
+                <p>Comparable readings in {night.stateCoverage.filter(state => state.matchedCells > 0).length} of 51 jurisdictions across the states and DC.</p>
+                <p>Use Map View to explore Alaska, Hawaii, and the Western Aleutians.</p>
+              </> : <p>{overnightPasses.length} satellite passes · {number.format(night.matchedCells)} cells compared.</p>}
               {night.sourceLabel && <p>{night.sourceLabel}</p>}
-              {inPreview && <p>Exploratory view with up to {number.format(night.maxViewDifference)}° difference in viewing angle. The standard comparison uses 20°.</p>}
               <p>Cutoff: {number.format(night.cutoff)} {unit}. Viewing geometry can affect brightness between passes.</p>
             </> : nationalView ? <>
               <p>Event brightness compared with the median of at least three ordinary nights.</p>
@@ -312,14 +309,14 @@ function App() {
         <div className="map-column">
           <div className="map-stage">
             <div ref={mapContainer} className="map" role="region" aria-label={overnightMode ? 'Overnight satellite observations' : coverageMode ? 'United States matched satellite coverage' : hasRaster ? 'United States measured nighttime brightness change' : 'United States basemap'} />
-            <div className="map-top"><span className="map-tag"><i /> {inPreview ? 'VIIRS EXPLORATORY' : overnightMode ? 'VIIRS OVERNIGHT' : 'NASA BLACK MARBLE'}</span><span className="map-date">{formatDate(date)}</span></div>
+            <div className="map-top"><span className="map-tag"><i /> {overnightMode ? 'VIIRS OVERNIGHT' : 'NASA BLACK MARBLE'}</span><span className="map-date">{formatDate(date)}</span></div>
             {!hasRaster && <div className="empty-map"><span className="empty-icon">✧</span><h3>{emptyTitle}</h3><p>{emptyMessage}</p></div>}
             {mapError && <p className="map-error" role="status">Some map resources could not load. Check your internet connection and WebGL support.</p>}
             {overnightMode ? <div className="map-legend">
-              <span>{overnightPass.reference ? 'FIRST MEASURED PASS' : 'COMPARED WITH FIRST PASS'}</span>
-              <ul className="overnight-legend">{overnightPass.legend?.map(({ color, label }) =>
+              <span>{nationalPlayback ? 'NIGHTTIME BRIGHTNESS' : overnightPass.reference ? 'FIRST MEASURED PASS' : 'COMPARED WITH FIRST PASS'}</span>
+              <ul className="overnight-legend">{(night.legend ?? overnightPass.legend)?.map(({ color, label }) =>
                 <li key={label}><i style={{ background: color }} />{label}</li>)}</ul>
-              <p>Blank cells have no usable comparison.</p>
+              <p>{nationalPlayback ? 'Blank areas have no usable reading for this window.' : 'Blank cells have no usable comparison.'}</p>
             </div> : coverageMode ? <div className="map-legend">
               <span>MATCHED COVERAGE</span>
               <div className="legend-ramp" style={{ background: `linear-gradient(90deg, ${nationalView.coverageColors.join(', ')})` }} />
@@ -336,25 +333,34 @@ function App() {
           <div className="timeline">
             <div className="timeline-heading"><div><span className="field-label">DIWALI NIGHT</span><strong>{formatDate(date)}</strong></div><span className="relative-day">{nationalView ? 'Daily comparison available' : 'Daily comparison pending'}</span></div>
             {!overnightMode && nationalView && <p className="timeline-note">{nationalView.satellite} daily product · UTC product date {nationalView.productDateUtc}</p>}
-            {(strictPasses.length > 0 || previewPasses.length > 0) && <div className="overnight-choices" role="group" aria-label="Overnight comparison">
-              {strictPasses.length > 0 && <button type="button" className="overnight-toggle" aria-pressed={overnightSelection === 'strict'} onClick={() => openOvernight('strict')}>
-                {previewPasses.length ? `Standard playback · ${strictNight.region}` : `Open overnight playback · ${strictNight.region}`}
-              </button>}
-              {previewPasses.length > 0 && <button type="button" className="overnight-toggle" aria-pressed={inPreview} onClick={() => openOvernight('preview')}>
-                {previewPasses.length} passes · exploratory ({number.format(previewNight.maxViewDifference)}°)
-              </button>}
-              {overnightMode && <button type="button" className="overnight-toggle" onClick={closeOvernight}>
-                {nationalView ? 'Return to daily comparison' : 'View daily status'}
-              </button>}
+            {overnightPasses.length > 0 && <div className="overnight-choices" role="group" aria-label="Observation mode">
+              <button type="button" className="overnight-toggle" aria-pressed={!overnightMode} onClick={closeOvernight}>
+                {nationalView ? 'Daily comparison' : 'Daily status'}
+              </button>
+              <button type="button" className="overnight-toggle" aria-pressed={overnightMode} onClick={() => {
+                if (!nationalPlayback) setArea('overnight');
+                selectOvernightFrame(overnightIndex);
+              }}>
+                {nationalPlayback ? 'U.S. overnight playback' : `Overnight playback · ${night.region}`}
+              </button>
             </div>}
           </div>
-          {overnightMode && <OvernightPlayback key={overnightSelection} night={night} passes={overnightPasses} index={overnightIndex} onSelect={setOvernightIndex} />}
+          {(nationalPlayback || overnightMode) && <OvernightPlayback key={year} night={night} passes={overnightPasses}
+            index={overnightIndex} active={overnightMode} onSelect={selectOvernightFrame} />}
         </div>
       </section>
 
       <section className="research-strip"><div><span>01</span><h3>Compare against normal.</h3><p>Subtract a comparable baseline so ordinary city lights don’t look like a festival signal.</p></div><div><span>02</span><h3>Keep the gaps visible.</h3><p>Clouds and missing observations stay missing. An unobserved area isn’t evidence of no celebration.</p></div><div><span>03</span><h3>Let the evidence decide.</h3><p>A brighter night may have many explanations. A weak or absent signal is a useful finding too.</p></div></section>
 
-      <section className="method" id="method"><button className="method-toggle" aria-expanded={showMethod} onClick={() => setShowMethod(!showMethod)}><span><span className="eyebrow">THE METHOD</span><h2>Beautiful maps need careful questions.</h2></span><span className="expand">{showMethod ? '−' : '+'}</span></button>{showMethod && <div className="method-copy"><p>We will compare daily, quality-screened NASA VIIRS Black Marble nighttime radiance with a baseline from comparable non-festival nights. The first analysis uses 2025 to test whether a Diwali-associated change is distinguishable from normal night-to-night variation.</p><p>Same-night observations will be used for event detection. Historical values supplied by gap-filling will not count as new observations. Cloud, snow, retrieval quality, baseline sample counts, and local-night alignment must be checked before a glow layer is published.</p><p>The 2025 and 2026 views will use comparable processing and a fixed display scale. Matching positions relative to Diwali is more meaningful than matching calendar dates. Regional electricity demand can later provide separate context, at its actual grid-region resolution.</p><p>This experiment cannot identify individual celebrants, estimate crowd sizes from light alone, or establish that Diwali caused a change. Details and uncertainty will be published with the processed observations.</p><a href="https://developers.google.com/earth-engine/datasets/catalog/NASA_VIIRS_002_VNP46A2" target="_blank" rel="noreferrer">Read the NASA dataset documentation ↗</a></div>}</section>
+      <section className="method" id="method">
+        <button className="method-toggle" aria-expanded={showMethod} onClick={() => setShowMethod(!showMethod)}><span><span className="eyebrow">THE METHOD</span><h2>Beautiful maps need careful questions.</h2></span><span className="expand">{showMethod ? '−' : '+'}</span></button>
+        {showMethod && <div className="method-copy">
+          <p>The daily comparison subtracts the median of at least three usable ordinary nights from the NOAA-20 Diwali reading. The map shows where brightness increased and where cloud and quality checks left enough coverage to compare.</p>
+          <p>In 2025, Los Angeles was brighter across several well-covered comparisons. Results varied across metro areas, so the measurements leave the cause of those increases open.</p>
+          <p>Overnight playback compares brightness against a fixed cutoff at repeated observations of the same location. Clouds, viewing angles, and gaps between overpasses limit what the sequence can show.</p>
+          <a href="https://github.com/sahilchowdhury2007/diwali-lights-usa-2026/blob/main/docs/methodology.md" target="_blank" rel="noreferrer">Read the methodology and results ↗</a>
+        </div>}
+      </section>
     </main>
     <footer><span>DIWALI LIGHTS USA <span className="muted">/ 2025 + 2026</span></span><span>Observations first. Interpretations second.</span></footer>
   </>;

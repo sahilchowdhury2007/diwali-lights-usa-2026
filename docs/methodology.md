@@ -57,8 +57,6 @@ The mean was lower on the event night in all four usable pairs. The positive Oct
 
 The [Dallas export script](../earth-engine/05-export-dallas-pilot.js) prepares a GeoTIFF using the fixed-grid pilot baseline. Its four bands store event radiance, baseline median, signed change, and usable control count. The [converter](../scripts/prepare-dallas-pilot.py) derives the geographic corners from the Web Mercator export. The map colors positive changes up to +5 nW/cm²/sr and provides signed readings on click. Reprojection changes the number of display cells. The reported 22,340 comparisons refer to the original analysis grid.
 
-Overnight playback is deferred while the MVP tests measured brightness against a baseline. Tracking lights that switch off or stay on requires repeat readings of the same place within one night, aligned and screened for comparable conditions.
-
 The [metro coverage screen](../earth-engine/06-screen-metro-coverage.js) checks eight mainland test boxes on Suomi NPP and NOAA-20 separately. It reports raw availability, usable event pixels, and pixels with both a usable event reading and at least three usable control nights from the same platform. The 2025 dates and filters match the Dallas pilot. The 2026 screen uses the November 9 UTC candidate product and five earlier product dates after Sunday evenings. Use the coverage counts to choose follow-up regions before looking at brightness changes. Verify local overpass times before assigning event and control observations to nights. Two satellites observing the same festival night provide a cross-check, while a second year tests repeatability across festival nights.
 
 ### 2025 metro coverage results
@@ -136,6 +134,16 @@ The [NOAA-20 national screen](../earth-engine/09-screen-united-states.js) found 
 DC had six matches among seven sampled locations. West Virginia had usable event readings at nearly all sampled locations, but few met the control requirement. For the national map, the regional GeoTIFFs preserve both signed brightness change and the fraction of each cell with matched coverage so that areas with sparse observations remain distinguishable.
 
 The four exports contain 204,809 source cells with some matched coverage. Of these, 144,041 reach the 25% coverage threshold and 79,306 also have positive mean change. The national brightness map colors those increases from 0 to +5 nW/cm²/sr, while the coverage layer shows all measured coverage fractions, including 0% in the Western Aleutians. These source-cell totals differ from the state screen, which samples grid centers. The dashboard uses nearest-neighbor resampling for the Web Mercator display.
+
+### 2025 U.S. overnight playback
+
+The player groups actual observations into 15-minute UTC windows between New York sunset on October 20 and Los Angeles sunrise on October 21. NASA's Collection 2 Black Marble A1 tiles provide per-pixel UTC time, at-sensor radiance, viewing angles, and quality flags from NOAA-20, NOAA-21, and Suomi NPP. The builder samples the nearest source pixel to each cell on an approximately 3 km Web Mercator grid within state boundaries. The reported coverage describes these sampled grid cells. Their physical area varies by latitude. [NASA Black Marble A1 documentation](https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/products/VJ146A1)
+
+Each cell needs two quality-screened readings at least 15 minutes apart and within 20° of each other in sensor zenith angle. The reference is the reading with the most eligible later readings, with ties going to the earlier reading. The cutoff is 5 nW/cm²/sr. Blue means a later reading fell below the cutoff after an above-cutoff reference. Gold means both readings were above it. A cell may change brightness in the time between observations. Atmospheric effects, viewing geometry, and cross-satellite calibration can also affect radiance.
+
+Frames show only cells observed during the selected window that passed the comparison checks. An empty area may have no overpass, clouds, or no comparable reading within the window. Use the daily comparison for the separate question of brightness relative to ordinary nights.
+
+The published sequence has 19 observed windows between 06:00 and 14:00 UTC. It compares 846,530 of 2,394,043 sampled cells (35.4%) and includes at least one comparison in every state. No cell passed the repeat-reading checks in DC or the western Aleutians. The lower 48 had 752,803 comparable cells, Alaska had 93,164, and Hawaii had 563.
 
 ### Remaining checks
 
