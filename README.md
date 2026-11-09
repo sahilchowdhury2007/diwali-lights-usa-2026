@@ -41,6 +41,8 @@ Set `CREATE_EXPORTS = true` to create four GeoTIFF tasks for the lower 48, Hawai
 
 With the four GeoTIFFs in one directory, run `python scripts/prepare-national.py --year 2025 "path-to-export-directory"` using the dependencies below. The converter verifies the two data bands and shared grid, then generates both map layers and the pixel readings. The brightness layer shows increases where matched coverage reaches 25%. The coverage layer includes cells at 0%.
 
+For the 2026 comparison, set `YEAR = 2026` and first run with `CREATE_EXPORTS = false`. The Console must include the November 9 UTC event product and all five control dates. When they are available, set `CREATE_EXPORTS = true`, run again, then start all four tasks. Download the four `diwali_2026_*_0p05deg.tif` files into `data/raw/national-2026` and run `python scripts/prepare-national.py --year 2026 data/raw/national-2026`. Publish after checking the matched coverage and the generated layers.
+
 ## Reproduce the metro pilots locally
 
 Run [the export script](earth-engine/05-export-dallas-pilot.js) in Earth Engine and download the GeoTIFF. Convert it to a PNG overlay and pixel data with Python.
