@@ -1,8 +1,9 @@
-"""Create two aligned overnight GeoTIFFs from NASA Black Marble A1 tiles."""
+"""Create aligned overnight GeoTIFFs from NASA Black Marble A1 tiles."""
 
 import argparse
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from itertools import permutations
 from math import ceil, floor
 from pathlib import Path
 import re
@@ -83,25 +84,36 @@ def read_tile(path, satellite, bounds):
     return Tile(path, satellite, radiance, utc_hours, granule, view, valid, lat, lon)
 
 
-def choose_passes(a, b, max_view_difference):
-    comparable = a.valid & b.valid & (np.abs(a.view - b.view) <= max_view_difference)
-    gap = b.utc_hours - a.utc_hours
+def choose_passes(tiles, max_view_difference):
+    views = [tile.view for tile in tiles]
+    view_range = np.maximum.reduce(views) - np.minimum.reduce(views)
+    comparable = np.logical_and.reduce([tile.valid for tile in tiles]) & (view_range <= max_view_difference)
     best_count, best = 0, None
-    for earlier, later, separated in ((a, b, gap >= 0.25), (b, a, gap <= -0.25)):
-        candidates = comparable & separated
-        for first_id in np.unique(earlier.granule[candidates]):
-            first = candidates & (earlier.granule == first_id)
-            for later_id in np.unique(later.granule[first]):
-                shared = first & (later.granule == later_id)
-                count = int(shared.sum())
-                if count > best_count:
-                    best_count, best = count, (earlier, later, shared)
+    for ordered in permutations(tiles):
+        candidates = comparable.copy()
+        for earlier, later in zip(ordered, ordered[1:]):
+            candidates &= (later.utc_hours - earlier.utc_hours) >= 0.25
+        if not candidates.any():
+            continue
+        # Keep one swath segment per satellite and use the same cells in every frame.
+        granules, counts = np.unique(
+            np.column_stack([tile.granule[candidates] for tile in ordered]),
+            axis=0,
+            return_counts=True,
+        )
+        winner = int(np.argmax(counts))
+        count = int(counts[winner])
+        if count > best_count:
+            for tile, granule in zip(ordered, granules[winner]):
+                candidates &= tile.granule == granule
+            best_count, best = count, (ordered, candidates)
     if best is None:
-        raise ValueError("No shared clear cells passed the viewing-angle and 15-minute separation checks.")
+        raise ValueError(f"No cells were usable in all {len(tiles)} passes under the viewing-angle and 15-minute separation checks.")
     return best
 
 
-def save_pair(first, later, shared, day, bounds, output, resolution):
+def save_passes(tiles, shared, day, bounds, output, resolution):
+    first = tiles[0]
     dx, dy = first.lon[1] - first.lon[0], first.lat[0] - first.lat[1]
     if not np.allclose(np.diff(first.lon), dx) or not np.allclose(-np.diff(first.lat), dy):
         raise ValueError("Expected a regular latitude/longitude grid.")
@@ -122,14 +134,17 @@ def save_pair(first, later, shared, day, bounds, output, resolution):
                   resampling=Resampling.nearest)
         return result
 
-    projected = [(tile, warp(tile.radiance), warp(tile.utc_hours)) for tile in (first, later)]
+    projected = [(tile, warp(tile.radiance), warp(tile.utc_hours)) for tile in tiles]
     valid = np.logical_and.reduce([times != NODATA for _, _, times in projected])
     if not valid.any():
         raise ValueError("No shared cells landed on the output grid. Try a finer --resolution.")
 
     output.mkdir(parents=True, exist_ok=True)
     print(f"Shared cells on the output grid: {valid.sum():,} of {valid.size:,} ({valid.mean():.1%})")
-    for name, (tile, values, times) in zip(("first-pass", "later-pass"), projected):
+    names = ["first-pass", "later-pass"]
+    if len(tiles) == 3:
+        names.insert(1, "middle-pass")
+    for name, (tile, values, times) in zip(names, projected):
         seconds = [round(float(hours) * 3600) for hours in (times[valid].min(), np.median(times[valid]), times[valid].max())]
         start, nominal, end = [(day + timedelta(seconds=s)).strftime("%Y-%m-%dT%H:%M:%SZ") for s in seconds]
         path = output / f"{name}.tif"
@@ -147,6 +162,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("tile_a", type=Path)
     parser.add_argument("tile_b", type=Path)
+    parser.add_argument("tile_c", type=Path, nargs="?", help="Optional third satellite for the same tile and UTC date")
     parser.add_argument("--bounds", type=float, nargs=4, default=LA_BOUNDS, metavar=("WEST", "SOUTH", "EAST", "NORTH"))
     parser.add_argument("--resolution", type=int, default=750, help="Output grid spacing in Web Mercator meters")
     parser.add_argument("--max-view-difference", type=float, default=20, help="Maximum difference in sensor zenith angles")
@@ -158,17 +174,20 @@ def main():
     if args.resolution <= 0 or not 0 <= args.max_view_difference <= 60:
         parser.error("Use positive resolution and a view-angle difference from 0 to 60 degrees.")
     try:
-        a, b = identity(args.tile_a), identity(args.tile_b)
-        if a[0] == b[0] or a[1:] != b[1:]:
-            raise ValueError("Use two satellites for the same UTC date and the same NASA tile ID.")
-        first = read_tile(args.tile_a, a[0], args.bounds)
-        second = read_tile(args.tile_b, b[0], args.bounds)
-        if (first.radiance.shape != second.radiance.shape
-                or not np.allclose(first.lat, second.lat, atol=1e-8, rtol=0)
-                or not np.allclose(first.lon, second.lon, atol=1e-8, rtol=0)):
-            raise ValueError("The NASA inputs do not use the same source grid.")
-        early, late, shared = choose_passes(first, second, args.max_view_difference)
-        save_pair(early, late, shared, a[1], args.bounds, args.output_dir, args.resolution)
+        paths = [path for path in (args.tile_a, args.tile_b, args.tile_c) if path is not None]
+        identities = [identity(path) for path in paths]
+        satellites, days, tile_ids = zip(*identities)
+        if len(set(satellites)) != len(paths) or len(set(days)) != 1 or len(set(tile_ids)) != 1:
+            raise ValueError("Use distinct satellites for the same UTC date and the same NASA tile ID.")
+        tiles = [read_tile(path, satellite, args.bounds) for path, satellite in zip(paths, satellites)]
+        first = tiles[0]
+        for tile in tiles[1:]:
+            if (first.radiance.shape != tile.radiance.shape
+                    or not np.allclose(first.lat, tile.lat, atol=1e-8, rtol=0)
+                    or not np.allclose(first.lon, tile.lon, atol=1e-8, rtol=0)):
+                raise ValueError("The NASA inputs do not use the same source grid.")
+        ordered, shared = choose_passes(tiles, args.max_view_difference)
+        save_passes(ordered, shared, days[0], args.bounds, args.output_dir, args.resolution)
     except (OSError, KeyError, ValueError) as error:
         parser.exit(1, f"{error}\n")
 

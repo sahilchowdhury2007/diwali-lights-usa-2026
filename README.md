@@ -85,6 +85,8 @@ python scripts/prepare-overnight.py --year 2025 --region "Phoenix pilot" --cutof
 npm run dev
 ```
 
+To test a third pass, append the [Suomi NPP A1 tile](https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5200/VNP46A1/2025/294/VNP46A1.A2025294.h06v05.002.2025295121229.h5) as the third positional argument to the GeoTIFF exporter. Use a separate output directory. The exporter requires the same clear cells in all three passes, with at least 15 minutes between consecutive readings and a maximum 20° viewing-angle spread by default. If a valid match exists, it writes `first-pass.tif`, `middle-pass.tif`, and `later-pass.tif`. Use all three printed `--frame` arguments in the frame builder.
+
 The builder limits the comparison to cells with valid readings in every frame. The earliest pass is the reference. Later frames show which cells crossed the cutoff or were on the same side of it in both readings. A cell above the cutoff at two passes may have changed between them.
 
 On the matching year's festival date, select **Open overnight playback**. The slider and playback step through measured passes. The dotted timeline places them between New York sunset and Los Angeles sunrise. The control appears when the manifest has at least two measured frames for that night. The builder writes the PNGs to `public/data/<year>/overnight` and updates the public manifest. Commit those files with the player code and push to `main` to publish.
