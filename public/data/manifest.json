@@ -422,7 +422,107 @@
     },
     "2026": {
       "eventDate": "2026-11-08",
-      "status": "awaiting_event"
+      "status": "awaiting_event",
+      "overnight": {
+        "sunset": "2026-11-08T21:44:00Z",
+        "sunrise": "2026-11-09T14:20:00Z",
+        "region": "Phoenix pilot",
+        "cutoff": 5.0,
+        "matchedCells": 12949,
+        "frames": [
+          {
+            "time": "2026-11-09T08:55:22Z",
+            "label": "NOAA-20 pass",
+            "reference": true,
+            "legend": [
+              {
+                "color": "#40516a",
+                "label": "Below cutoff"
+              },
+              {
+                "color": "#ffc56e",
+                "label": "Above cutoff"
+              }
+            ],
+            "tiles": [
+              {
+                "name": "Phoenix pilot",
+                "raster": {
+                  "url": "2026/overnight/20261109T085522-f6da1afe780b.png",
+                  "coordinates": [
+                    [
+                      -112.6128040172232,
+                      33.88223497008271
+                    ],
+                    [
+                      -111.4719436063914,
+                      33.88223497008271
+                    ],
+                    [
+                      -111.4719436063914,
+                      33.118173166882315
+                    ],
+                    [
+                      -112.6128040172232,
+                      33.118173166882315
+                    ]
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "time": "2026-11-09T09:38:46Z",
+            "label": "NOAA-21 pass",
+            "reference": false,
+            "legend": [
+              {
+                "color": "#40516a",
+                "label": "Below cutoff at both passes"
+              },
+              {
+                "color": "#76a9ff",
+                "label": "Dropped below cutoff"
+              },
+              {
+                "color": "#72d7ad",
+                "label": "Rose above cutoff"
+              },
+              {
+                "color": "#ffc56e",
+                "label": "Above cutoff at both passes"
+              }
+            ],
+            "tiles": [
+              {
+                "name": "Phoenix pilot",
+                "raster": {
+                  "url": "2026/overnight/20261109T093846-dce727b896a6.png",
+                  "coordinates": [
+                    [
+                      -112.6128040172232,
+                      33.88223497008271
+                    ],
+                    [
+                      -111.4719436063914,
+                      33.88223497008271
+                    ],
+                    [
+                      -111.4719436063914,
+                      33.118173166882315
+                    ],
+                    [
+                      -112.6128040172232,
+                      33.118173166882315
+                    ]
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "sourceLabel": "NOAA at-sensor VIIRS radiance screened with JRR cloud masks."
+      }
     }
   }
 }

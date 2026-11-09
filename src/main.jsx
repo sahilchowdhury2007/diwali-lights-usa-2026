@@ -89,6 +89,19 @@ function App() {
     setArea('overnight');
   }
 
+  function selectYear(nextYear) {
+    if (nextYear === year) return;
+    setYear(nextYear);
+    const nextData = manifest?.years?.[nextYear];
+    if (!nextData?.national?.tiles?.length && getOvernightPasses(nextData?.overnight).length > 0) {
+      setOvernightIndex(0);
+      setOvernightSelection('strict');
+      setArea('overnight');
+    } else {
+      closeOvernight();
+    }
+  }
+
   useEffect(() => {
     if (!overnightMode) return;
     const nextPass = overnightPasses[overnightIndex + 1];
@@ -254,10 +267,7 @@ function App() {
           <h2>A little extra light.</h2>
           <p className="small-copy">Explore the U.S. satellite comparison and use city labels to find your bearings as you zoom in.</p>
           <label className="field-label" id="year-label">DIWALI YEAR</label>
-          <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => {
-            if (year !== value) closeOvernight();
-            setYear(value);
-          }}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
+          <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => selectYear(value)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
           <div className="event-row"><span>Festival date</span><strong>{formatDate(dates[year])}</strong></div>
           <label className="field-label" htmlFor="area">MAP VIEW</label>
           <select id="area" value={area} onChange={event => setArea(event.target.value)}>
@@ -288,6 +298,7 @@ function App() {
           <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
             {overnightMode ? <>
               <p>{overnightPasses.length} satellite passes · {number.format(night.matchedCells)} cells compared.</p>
+              {night.sourceLabel && <p>{night.sourceLabel}</p>}
               {inPreview && <p>Exploratory view with up to {number.format(night.maxViewDifference)}° difference in viewing angle. The standard comparison uses 20°.</p>}
               <p>Cutoff: {number.format(night.cutoff)} {unit}. Viewing geometry can affect brightness between passes.</p>
             </> : nationalView ? <>
@@ -332,7 +343,9 @@ function App() {
               {previewPasses.length > 0 && <button type="button" className="overnight-toggle" aria-pressed={inPreview} onClick={() => openOvernight('preview')}>
                 {previewPasses.length} passes · exploratory ({number.format(previewNight.maxViewDifference)}°)
               </button>}
-              {overnightMode && <button type="button" className="overnight-toggle" onClick={closeOvernight}>Return to daily comparison</button>}
+              {overnightMode && <button type="button" className="overnight-toggle" onClick={closeOvernight}>
+                {nationalView ? 'Return to daily comparison' : 'View daily status'}
+              </button>}
             </div>}
           </div>
           {overnightMode && <OvernightPlayback key={overnightSelection} night={night} passes={overnightPasses} index={overnightIndex} onSelect={setOvernightIndex} />}

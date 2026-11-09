@@ -95,6 +95,12 @@ The builder limits the comparison to cells with valid readings in every frame. T
 
 On the matching year's festival date, select **Open overnight playback**. The slider and playback step through measured passes. The dotted timeline places them between New York sunset and Los Angeles sunrise. The control appears when the manifest has at least two measured frames for that night. The builder writes the PNGs to `public/data/<year>/overnight` and updates the public manifest. Commit those files with the player code and push to `main` to publish.
 
+### 2026 Phoenix overnight pilot
+
+The 2026 Phoenix pilot uses NOAA's open VIIRS DNB radiance and geolocation files with matching JRR cloud masks. It uses two November 9, 2026 UTC granules, NOAA-20 starting at 08:54:19.7 and NOAA-21 starting at 09:38:25.4. For each granule, use the matching SVDNB, GDNBO, and JRR-CloudMask files from the `2026/11/09` directories. [NOAA open-data directory](https://ncc.nesdis.noaa.gov/VIIRS/noddviirs.php)
+
+Run `scripts/export-noaa-overnight.py` with two `--pass SDR GEO CLOUD` bundles and an `--output-dir`. It uses a 1 km Web Mercator grid, nearest samples within 1 km in that projection, clear JRR pixels, and the 20° viewing-angle check. Install `h5py numpy rasterio scipy` first. The resulting pair covers 12,949 of 12,954 output cells. The nominal times are 08:55:22 and 09:38:46 UTC. Feed the printed frame arguments into `prepare-overnight.py --year 2026`. The NOAA swath pilot and the national Black Marble comparison are separate products.
+
 ## First research milestone
 
 Before nationwide processing, assess valid coverage, observation timing, baseline variability, and event-versus-control differences in several preregistered test regions. Fix the method before evaluating 2026. See `docs/methodology.md`.

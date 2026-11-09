@@ -60,12 +60,24 @@ print('Event UTC product date', schedule.event);
 print('Analysis grid', GRID_CRS, GRID_STEP + ' degrees');
 print('State and district count', states.size());
 images.aggregate_array('utc_date').sort().evaluate(function(found, error) {
-  if (error) {
-    print('Image date check failed', error);
+  if (error || !Array.isArray(found)) {
+    print('Image date check failed', error || 'No dates were returned.');
+    return;
+  }
+  var eventAvailable = found.indexOf(schedule.event) !== -1;
+  var missingControls = schedule.controls.filter(function(date) {
+    return found.indexOf(date) === -1;
+  });
+  print('Event product available', eventAvailable);
+  print('Dates available', found);
+  if (!eventAvailable || missingControls.length) {
+    print('Waiting for NOAA-20 UTC product dates',
+      (eventAvailable ? [] : [schedule.event]).concat(missingControls));
+    print('Coverage, map layers, and exports will be ready once these dates are available.');
     return;
   }
   if (found.join(',') !== dates.join(',')) {
-    print('Expected one NOAA-20 image per event and control date. Dates available', found);
+    print('Expected exactly one NOAA-20 image per date. Check the duplicate date before exporting.');
     return;
   }
 

@@ -83,6 +83,7 @@ def main():
     parser.add_argument("--year", required=True, type=int, choices=WINDOWS)
     parser.add_argument("--region", required=True, help="Region covered by these rasters")
     parser.add_argument("--cutoff", required=True, type=float, help="Brightness threshold in nW/cm²/sr")
+    parser.add_argument("--source-label", help="Source description displayed with the playback")
     parser.add_argument("--view-angle-preview", type=float, metavar="DEGREES",
                         help="Save a separate exploratory sequence made with this wider view-angle limit")
     parser.add_argument("--frame", action="append", required=True, nargs=3, metavar=("UTC", "GEOTIFF", "LABEL"))
@@ -128,6 +129,8 @@ def main():
         "matchedCells": int(shared.sum()),
         "frames": output,
     }
+    if args.source_label:
+        night["sourceLabel"] = args.source_label
     key = "overnight"
     if args.view_angle_preview is not None:
         key = "overnightPreview"
