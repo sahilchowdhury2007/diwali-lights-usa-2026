@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The dashboard includes 2025 and 2026 views and a date slider. The 2025 festival date opens the national NOAA-20 comparison. The satellite layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. City labels help orient the map as you zoom. Click a map cell to inspect the data. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
+The dashboard includes 2025 and 2026 views. The 2025 festival date opens the national NOAA-20 comparison. The satellite layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. City labels help orient the map as you zoom. Click a map cell to inspect the data. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
 
 ## Run locally
 
@@ -87,7 +87,7 @@ npm run dev
 
 The builder limits the comparison to cells with valid readings in every frame. The earliest pass is the reference. Later frames show which cells crossed the cutoff or were on the same side of it in both readings. A cell above the cutoff at two passes may have changed between them.
 
-On the matching year's festival date, select **Open overnight playback**. You can step through measured passes and gaps from New York sunset to Los Angeles sunrise. The control appears when the manifest has at least two measured frames for that night. The builder writes the PNGs to `public/data/<year>/overnight` and updates the public manifest. Commit those files with the player code and push to `main` to publish.
+On the matching year's festival date, select **Open overnight playback**. The slider and playback step through measured passes. The dotted timeline places them between New York sunset and Los Angeles sunrise. The control appears when the manifest has at least two measured frames for that night. The builder writes the PNGs to `public/data/<year>/overnight` and updates the public manifest. Commit those files with the player code and push to `main` to publish.
 
 ## First research milestone
 
