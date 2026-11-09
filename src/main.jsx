@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as maplibre from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { addCityLabels } from './city-labels.js';
 import { PlaceSearch } from './PlaceSearch.jsx';
+import { makeOvernightStops, OvernightPlayback } from './overnight.jsx';
 import './style.css';
 
 maplibre.setWorkerUrl(workerUrl);
@@ -50,21 +51,58 @@ function App() {
   const [satelliteLayer, setSatelliteLayer] = useState('change');
   const [opacity, setOpacity] = useState(85);
   const [showMethod, setShowMethod] = useState(false);
+  const [overnightDate, setOvernightDate] = useState(null);
+  const [overnightIndex, setOvernightIndex] = useState(0);
   const mapContainer = useRef(null);
   const map = useRef(null);
   const date = dateAtOffset(year, offset);
-  const national = manifest?.years?.[year]?.national;
+  const yearData = manifest?.years?.[year];
+  const national = yearData?.national;
   const nationalView = national?.date === date ? national : null;
+  const night = yearData?.eventDate === date ? yearData.overnight : null;
+  const overnightStops = useMemo(() => makeOvernightStops(night), [night]);
+  const overnightMode = overnightDate === date && overnightStops.length > 0;
+  const overnightStop = overnightMode ? overnightStops[overnightIndex] : null;
+  const areaBounds = useMemo(() => {
+    if (area !== 'overnight') return locations[area];
+    const corners = night?.frames?.[0]?.tiles?.[0]?.raster?.coordinates;
+    return corners ? [corners[3], corners[1]] : null;
+  }, [area, night]);
   const coverageMode = Boolean(nationalView && satelliteLayer === 'coverage');
   const strongMode = nationalView?.strongChangeMin != null && satelliteLayer === 'strong';
-  const layerUrlKey = coverageMode ? 'coverageUrl' : strongMode ? 'strongChangeUrl' : 'url';
+  const layerUrlKey = !overnightMode && coverageMode ? 'coverageUrl' : !overnightMode && strongMode ? 'strongChangeUrl' : 'url';
   const layerDescription = !nationalView ? null
     : coverageMode ? 'Shows how much of each map cell has enough usable satellite readings to compare Diwali with ordinary nights. Use this layer to spot gaps in the data.'
       : strongMode ? `Shows only increases above +${number.format(nationalView.strongChangeMin)} ${unit}. This makes larger increases easier to spot.`
         : `Shows where Diwali was brighter than the median of ordinary nights. Gold appears where at least ${percent.format(nationalView.minCoverage)} of a cell has usable comparisons.`;
-  const displayed = nationalView?.tiles ?? emptyTiles;
+  const displayed = (overnightMode ? overnightStop.tiles : nationalView?.tiles) ?? emptyTiles;
   const hasRaster = displayed.length > 0;
+  const showCities = overnightMode || hasRaster;
   const legend = displayed[0]?.raster;
+
+  function closeOvernight() {
+    setOvernightDate(null);
+    if (area === 'overnight') setArea('United States');
+  }
+
+  function toggleOvernight() {
+    if (overnightMode) {
+      closeOvernight();
+    } else {
+      setOvernightIndex(overnightStops.findIndex(stop => stop.tiles?.length));
+      setOvernightDate(date);
+      setArea('overnight');
+    }
+  }
+
+  useEffect(() => {
+    if (!overnightMode) return;
+    const nextPass = overnightStops.slice(overnightIndex + 1).find(stop => stop.tiles?.length);
+    nextPass?.tiles.forEach(({ raster }) => {
+      const image = new Image();
+      image.src = dataUrl(raster.url);
+    });
+  }, [overnightMode, overnightIndex, overnightStops]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -117,13 +155,13 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!map.current || !mapReady || !locations[area]) return;
-    map.current.fitBounds(locations[area], { padding: 42, duration: 700 });
-  }, [area, mapReady]);
+    if (!map.current || !mapReady || !areaBounds) return;
+    map.current.fitBounds(areaBounds, { padding: 42, duration: 700 });
+  }, [areaBounds, mapReady]);
 
   useEffect(() => {
-    if (map.current && mapReady && hasRaster) return addCityLabels(map.current);
-  }, [mapReady, hasRaster]);
+    if (map.current && mapReady && showCities) return addCityLabels(map.current);
+  }, [mapReady, showCities]);
 
   useEffect(() => {
     const instance = map.current;
@@ -150,7 +188,7 @@ function App() {
 
   useEffect(() => {
     const instance = map.current;
-    if (!instance || !mapReady || !displayed.length) return;
+    if (!instance || !mapReady || overnightMode || !nationalView || !displayed.length) return;
     const controller = new AbortController();
     const popup = new maplibre.Popup({ maxWidth: '240px', className: 'reading-popup' });
     const readings = displayed.filter(item => item.raster.pixelsUrl).map(item => {
@@ -194,10 +232,11 @@ function App() {
     }
     instance.on('click', inspect);
     return () => { controller.abort(); instance.off('click', inspect); popup.remove(); };
-  }, [mapReady, displayed, nationalView]);
+  }, [mapReady, displayed, nationalView, overnightMode]);
 
   const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index'
-    : nationalView ? `United States · ${nationalView.satellite}` : 'No processed observation';
+    : overnightMode ? `Overnight playback · ${night.region}`
+      : nationalView ? `United States · ${nationalView.satellite}` : 'No processed observation';
   const emptyTitle = dataError ? 'Data index unavailable' : 'No satellite observation';
   const emptyMessage = dataError
     ? 'The observation index could not load.'
@@ -223,16 +262,23 @@ function App() {
           <h2>A little extra light.</h2>
           <p className="small-copy">Explore the U.S. satellite comparison and use city labels to find your bearings as you zoom in.</p>
           <label className="field-label" id="year-label">DIWALI YEAR</label>
-          <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => setYear(value)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
+          <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => {
+            if (year !== value) closeOvernight();
+            setYear(value);
+          }}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
           <div className="event-row"><span>Festival date</span><strong>{formatDate(dates[year])}</strong></div>
           <label className="field-label" htmlFor="area">MAP VIEW</label>
           <select id="area" value={area} onChange={event => setArea(event.target.value)}>
             {area === 'search' && <option value="search" disabled>Search result</option>}
+            {overnightMode && <option value="overnight">{night.region}</option>}
             {Object.keys(locations).map(name => <option key={name}>{name}</option>)}
           </select>
           <PlaceSearch map={map} ready={mapReady} onSelect={() => setArea('search')} />
           <div className="rule" />
-          {nationalView ? <div className="layer-picker">
+          {overnightMode ? <div className="layer-picker">
+            <span className="field-label">SATELLITE LAYER</span>
+            <p className="layer-description">Compare the same usable cells across satellite passes. The colors show whether a cell was above the brightness cutoff at the first pass and the selected pass.</p>
+          </div> : nationalView ? <div className="layer-picker">
             <label className="field-label" htmlFor="satellite-layer">SATELLITE LAYER</label>
             <select id="satellite-layer" aria-describedby="layer-description" value={coverageMode ? 'coverage' : strongMode ? 'strong' : 'change'} onChange={event => setSatelliteLayer(event.target.value)}>
               <option value="change">Brighter than baseline</option>
@@ -246,9 +292,12 @@ function App() {
           </>}
           <label className="opacity-label" htmlFor="opacity">Layer opacity <span>{opacity}%</span></label>
           <input id="opacity" type="range" min="10" max="100" value={opacity} disabled={!hasRaster} onChange={event => setOpacity(Number(event.target.value))} />
-          <div className="layer-note">{hasRaster ? 'Click a cell to see its coverage and brightness change.' : 'Layer opacity is available for processed observations.'}</div>
+          {!overnightMode && <div className="layer-note">{hasRaster ? 'Click a cell to see its coverage and brightness change.' : 'Layer opacity is available for processed observations.'}</div>}
           <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
-            {nationalView ? <>
+            {overnightMode ? <>
+              <p>{night.frames.length} satellite passes · {number.format(night.matchedCells)} cells compared.</p>
+              <p>Cutoff: {number.format(night.cutoff)} {unit}. Viewing geometry can affect brightness between passes.</p>
+            </> : nationalView ? <>
               <p>Event brightness compared with the median of at least three ordinary nights.</p>
               <p>Brightness increases are shown where at least {percent.format(nationalView.minCoverage)} of a cell has matched coverage.</p>
               <p>Use Map View to explore Alaska, Hawaii, and the Western Aleutians.</p>
@@ -258,11 +307,16 @@ function App() {
 
         <div className="map-column">
           <div className="map-stage">
-            <div ref={mapContainer} className="map" role="region" aria-label={coverageMode ? 'United States matched satellite coverage' : hasRaster ? 'United States measured nighttime brightness change' : 'United States basemap'} />
-            <div className="map-top"><span className="map-tag"><i /> NASA BLACK MARBLE</span><span className="map-date">{formatDate(date)}</span></div>
-            {!hasRaster && <div className="empty-map"><span className="empty-icon">✧</span><h3>{emptyTitle}</h3><p>{emptyMessage}</p></div>}
+            <div ref={mapContainer} className="map" role="region" aria-label={overnightMode ? 'Overnight satellite observations' : coverageMode ? 'United States matched satellite coverage' : hasRaster ? 'United States measured nighttime brightness change' : 'United States basemap'} />
+            <div className="map-top"><span className="map-tag"><i /> {overnightMode ? 'VIIRS OVERNIGHT' : 'NASA BLACK MARBLE'}</span><span className="map-date">{formatDate(date)}</span></div>
+            {!hasRaster && <div className="empty-map"><span className="empty-icon">✧</span><h3>{overnightMode ? 'No reading for this frame' : emptyTitle}</h3><p>{overnightMode ? 'Move the slider to a measured pass to see the map.' : emptyMessage}</p></div>}
             {mapError && <p className="map-error" role="status">Some map resources could not load. Check your internet connection and WebGL support.</p>}
-            {coverageMode ? <div className="map-legend">
+            {overnightMode ? hasRaster && <div className="map-legend">
+              <span>{overnightStop.reference ? 'FIRST MEASURED PASS' : 'COMPARED WITH FIRST PASS'}</span>
+              <ul className="overnight-legend">{overnightStop.legend?.map(({ color, label }) =>
+                <li key={label}><i style={{ background: color }} />{label}</li>)}</ul>
+              <p>Blank cells have no usable comparison.</p>
+            </div> : coverageMode ? <div className="map-legend">
               <span>MATCHED COVERAGE</span>
               <div className="legend-ramp" style={{ background: `linear-gradient(90deg, ${nationalView.coverageColors.join(', ')})` }} />
               <div className="legend-labels"><span>0%</span><span>100%</span></div>
@@ -277,10 +331,17 @@ function App() {
           </div>
           <div className="timeline">
             <div className="timeline-heading"><div><span className="field-label">NIGHT TO EXPLORE</span><strong>{formatDate(date)}</strong></div><span className="relative-day">{Number(offset) === 0 ? 'Diwali reference date' : `${Math.abs(offset)} ${Math.abs(offset) === 1 ? 'day' : 'days'} ${offset < 0 ? 'before' : 'after'} Diwali`}</span></div>
-            <label className="sr-only" htmlFor="night">Days relative to Diwali</label><input id="night" type="range" min="-7" max="7" step="1" value={offset} onChange={event => setOffset(Number(event.target.value))} />
+            <label className="sr-only" htmlFor="night">Days relative to Diwali</label><input id="night" type="range" min="-7" max="7" step="1" value={offset} onChange={event => {
+              closeOvernight();
+              setOffset(Number(event.target.value));
+            }} />
             <div className="timeline-labels"><span>−7 DAYS</span><button onClick={() => setOffset(0)}>DIWALI <span>✧</span></button><span>+7 DAYS</span></div>
-            {hasRaster && <p className="timeline-note">{nationalView.satellite} daily product · UTC product date {nationalView.productDateUtc}</p>}
+            {!overnightMode && hasRaster && <p className="timeline-note">{nationalView.satellite} daily product · UTC product date {nationalView.productDateUtc}</p>}
+            {overnightStops.length > 0 && <button type="button" className="overnight-toggle" aria-expanded={overnightMode} onClick={toggleOvernight}>
+              {overnightMode ? 'Return to daily comparison' : `Open overnight playback · ${night.region}`}
+            </button>}
           </div>
+          {overnightMode && <OvernightPlayback stops={overnightStops} index={overnightIndex} onSelect={setOvernightIndex} />}
         </div>
       </section>
 

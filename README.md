@@ -59,6 +59,36 @@ The repository uses **GitHub Actions** as its Pages source. The [deployment work
 
 Earth Engine processing runs outside the public site. Later, a separately configured data workflow can generate and publish static exports. No scheduled data ingestion or credentials are configured yet. The current Pages workflow only builds and publishes the frontend.
 
+## Prepare overnight playback
+
+1. In the Earth Engine Code Editor, run the [overnight input check](earth-engine/12-check-overnight-inputs.js) under project `diwali-lights-usa`. The Console lists the daily NOAA-20 A2 bands for October 21, 2025 UTC. This product supports the daily brightness comparison and omits per-pixel `UTC_Time`. The overnight pilot needs two readings from different times of the same night. [Earth Engine NOAA-20 A2 catalog](https://developers.google.com/earth-engine/datasets/catalog/NASA_VIIRS_002_VJ146A2)
+2. Sign in to NASA Earthdata and download both A1 inputs. These HDF5 files contain the observation times and quality flags used to isolate passes. Both cover Los Angeles and Phoenix in tile `h06v05` on October 21, 2025 UTC. Save them in `data/raw/overnight-la-2025` under the repo. [NOAA-20 tile](https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5200/VJ146A1/2025/294/VJ146A1.A2025294.h06v05.002.2025295100330.h5) · [NOAA-21 tile](https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5200/VJ246A1/2025/294/VJ246A1.A2025294.h06v05.002.2025343142734.h5)
+3. From the repo folder, run the exporter in PowerShell. This pair failed the 20° viewing-angle check over Los Angeles. The Phoenix pilot uses the same tiles and screening rules.
+
+```powershell
+python -m pip install h5py numpy rasterio
+python scripts/export-overnight-geotiffs.py --output-dir data/raw/overnight-phoenix-2025 `
+  --bounds -112.61 33.12 -111.48 33.88 `
+  "data/raw/overnight-la-2025/VJ146A1.A2025294.h06v05.002.2025295100330.h5" `
+  "data/raw/overnight-la-2025/VJ246A1.A2025294.h06v05.002.2025343142734.h5"
+```
+
+The exporter selects the pass pair with the most shared clear cells under its time and viewing-angle checks. It writes `first-pass.tif` and `later-pass.tif` and prints the `--frame` arguments for the builder below. The A1 radiance is measured at the sensor. Differences can still reflect viewing geometry, atmospheric conditions, or calibration across satellites, so use the outputs as an exploratory pilot.
+
+The Phoenix pair has 7,391 matched cells, or 31.9% of the output grid. The nominal observation times are 08:47:06 and 09:38:08 UTC. Use the printed `--frame` arguments to build the two frames at the exploratory cutoff of 5 nW/cm²/sr.
+
+```powershell
+python -m pip install rasterio numpy Pillow
+python scripts/prepare-overnight.py --year 2025 --region "Phoenix pilot" --cutoff 5 `
+  --frame "2025-10-21T08:47:06Z" "data/raw/overnight-phoenix-2025/first-pass.tif" "NOAA-20 pass" `
+  --frame "2025-10-21T09:38:08Z" "data/raw/overnight-phoenix-2025/later-pass.tif" "NOAA-21 pass"
+npm run dev
+```
+
+The builder limits the comparison to cells with valid readings in every frame. The earliest pass is the reference. Later frames show which cells crossed the cutoff or were on the same side of it in both readings. A cell above the cutoff at two passes may have changed between them.
+
+On the matching year's festival date, select **Open overnight playback**. You can step through measured passes and gaps from New York sunset to Los Angeles sunrise. The control appears when the manifest has at least two measured frames for that night. The builder writes the PNGs to `public/data/<year>/overnight` and updates the public manifest. Commit those files with the player code and push to `main` to publish.
+
 ## First research milestone
 
 Before nationwide processing, assess valid coverage, observation timing, baseline variability, and event-versus-control differences in several preregistered test regions. Fix the method before evaluating 2026. See `docs/methodology.md`.
