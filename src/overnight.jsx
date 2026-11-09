@@ -33,6 +33,7 @@ export function OvernightPlayback({ night, passes, index, active, onSelect }) {
   const last = passes.length - 1;
   const windowed = Boolean(night.frameMinutes);
   const local = Number.isInteger(night.startLocalHour);
+  const matched = night.fixedFootprint === true;
   const time = windowed ? pass.label : clocks.map(clock => clock.format(pass.time)).join(' · ');
   const [start, end] = playbackBounds(night);
 
@@ -45,9 +46,9 @@ export function OvernightPlayback({ night, passes, index, active, onSelect }) {
     const timer = window.setTimeout(() => {
       onSelect(index + 1);
       if (index + 1 === last) setPlaying(false);
-    }, windowed ? 1300 : 2200);
+    }, windowed && !matched ? 1300 : 2200);
     return () => window.clearTimeout(timer);
-  }, [active, index, last, onSelect, playing, windowed]);
+  }, [active, index, last, onSelect, playing, windowed, matched]);
 
   function select(index) {
     setPlaying(false);
@@ -65,8 +66,8 @@ export function OvernightPlayback({ night, passes, index, active, onSelect }) {
 
   return <section className="timeline overnight-player" aria-label={local ? 'Lower 48 local time playback' : 'Sunset to sunrise playback'}>
     <div className="timeline-heading">
-      <div><span className="field-label">{local ? 'LOWER 48 BY LOCAL HOUR' : 'SUNSET TO SUNRISE'}</span><strong>{time}</strong></div>
-      <button type="button" onClick={togglePlayback}>{playing ? 'Pause' : windowed ? 'Play night' : 'Play passes'}</button>
+      <div><span className="field-label">{matched ? 'LOWER 48 · SAME PLACES OVER TIME' : local ? 'LOWER 48 BY LOCAL HOUR' : 'SUNSET TO SUNRISE'}</span><strong>{time}</strong></div>
+      <button type="button" onClick={togglePlayback}>{playing ? 'Pause' : matched ? 'Play comparison' : windowed ? 'Play night' : 'Play passes'}</button>
     </div>
     <p className="overnight-status" aria-live={playing ? 'off' : 'polite'}>{windowed
       ? `${local ? 'Hour' : 'Window'} ${index + 1} of ${passes.length} · ${pass.cellCount.toLocaleString('en-US')} grid cells`
@@ -91,7 +92,9 @@ export function OvernightPlayback({ night, passes, index, active, onSelect }) {
       <span>{local ? `${localClock.format(start)} local` : `New York sunset · ${clocks[0].format(start)}`}</span>
       <span>{local ? `${localClock.format(end)} local` : `Los Angeles sunrise · ${clocks[1].format(end)}`}</span>
     </div>
-    <p className="timeline-note">{local
+    <p className="timeline-note">{matched
+      ? 'Both snapshots show exactly the same grid cells. The fade connects two measurements taken during the displayed local hours.'
+      : local
       ? 'Each frame combines readings from the same clock hour in each time zone. The slider skips hours without usable readings, including the early evening.'
       : windowed ? 'Move the slider or press Play to see the observed windows. Each dot marks a window with usable readings.'
       : 'Each dot marks a measured pass on the full-night timeline. The slider and playback step through those passes.'}</p>

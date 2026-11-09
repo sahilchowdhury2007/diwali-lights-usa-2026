@@ -1,4 +1,4 @@
-"""Build hourly Lower 48 playback in local time from Black Marble A1 tiles."""
+"""Build two Lower 48 brightness snapshots with the same coverage from Black Marble A1."""
 
 import argparse
 from collections import defaultdict
@@ -20,8 +20,8 @@ from black_marble import identity, read_tile, us_states
 
 ROOT = Path(__file__).resolve().parents[1]
 DAY = datetime(2025, 10, 21, tzinfo=timezone.utc)
-# Hours relative to midnight on October 21 in each cell's own time zone.
-START_HOUR, END_HOUR = -5, 7
+# These adjacent local hours have the widest shared coverage on this night.
+EARLY_HOUR, LATE_HOUR = 2, 3
 BOUNDS = (-125, 24, -66, 50)
 # Offsets for this date, when most of the Lower 48 was on daylight time.
 ZONE_OFFSETS = {
@@ -32,17 +32,9 @@ ZONE_OFFSETS = {
     'America/Phoenix': -7,
 }
 RESOLUTION = 3000
-CUTOFF = 5
 MAX_VIEW_DIFFERENCE = 20
-LEGEND = [
-    ('#55657a', 'Below cutoff at first reading'),
-    ('#d8a454', 'Above cutoff at first reading'),
-    ('#344259', 'Below cutoff at both readings'),
-    ('#76a9ff', 'Dropped below cutoff'),
-    ('#72d7ad', 'Rose above cutoff'),
-    ('#ffc56e', 'Above cutoff at both readings'),
-]
-COLORS = np.array([(0, 0, 0, 0)] + [(*ImageColor.getrgb(color), 255) for color, _ in LEGEND], dtype=np.uint8)
+RADIANCE_MAX = 40
+RADIANCE_COLORS = ['#263545', '#715635', '#d89342', '#ffedb1']
 
 
 def clock(hour):
@@ -88,32 +80,28 @@ def tile_groups(lat, lon):
 def compare(tiles, land, offsets):
     times = np.stack([tile.utc_hours for tile in tiles])
     views = np.stack([tile.view for tile in tiles])
-    bright = np.stack([tile.radiance >= CUTOFF for tile in tiles])
+    radiance = np.stack([tile.radiance for tile in tiles])
     local_times = times + offsets
     valid = np.stack([tile.valid for tile in tiles]) & land & (offsets != 0)
-    valid &= (local_times >= START_HOUR) & (local_times < END_HOUR)
+    early = valid & (local_times >= EARLY_HOUR) & (local_times < EARLY_HOUR + 1)
+    late = valid & (local_times >= LATE_HOUR) & (local_times < LATE_HOUR + 1)
     elapsed = times[None, ...] - times[:, None, ...]
-    pairs = valid[None, ...] & valid[:, None, ...] & (elapsed >= 0.25)
-    pairs &= np.abs(views[None, ...] - views[:, None, ...]) <= MAX_VIEW_DIFFERENCE
+    angle_difference = np.abs(views[None, ...] - views[:, None, ...])
+    pairs = early[:, None, ...] & late[None, ...] & (elapsed >= 0.25)
+    pairs &= angle_difference <= MAX_VIEW_DIFFERENCE
 
-    # Keep the reading with the most comparable later observations. In a tie,
-    # use the earlier reading so the comparison covers as much time as possible.
-    counts = pairs.sum(axis=1)
-    best = counts.max(axis=0)
-    reference = np.where(counts == best, times, np.inf).argmin(axis=0)
-    shared = best > 0
-    reference_bright = np.take_along_axis(bright, reference[None, ...], axis=0)[0]
-    selected_pairs = np.take_along_axis(pairs, reference[None, None, ...], axis=0)[0]
-    return times, local_times, shared, np.where(
-        (np.arange(len(tiles))[:, None, None] == reference) & shared, 1 + bright,
-        np.where(selected_pairs, 3 + reference_bright + 2 * bright, 0),
-    ).astype(np.uint8)
+    # Compare the most similar view angles when multiple pairs qualify.
+    shared = pairs.any(axis=(0, 1))
+    closest = np.where(pairs, angle_difference, np.inf).reshape(-1, *land.shape).argmin(axis=0)
+    indexes = np.stack(np.divmod(closest, len(tiles)))
+    readings = np.take_along_axis(radiance, indexes, axis=0)
+    return shared, np.where(shared, readings, np.nan), np.unique(indexes[:, shared])
 
 
 def read_region(geometries, inputs, state_count, zone_path):
     land, lat, lon, corners, grid = region_grid(geometries)
     offsets = read_offsets(zone_path, land.shape, grid)
-    frames = {}
+    frames = np.full((2, *land.shape), np.nan, dtype=np.float32)
     counts = np.bincount(land.ravel(), minlength=state_count + 1)
     matched = np.zeros_like(counts)
     sources = set()
@@ -124,26 +112,25 @@ def read_region(geometries, inputs, state_count, zone_path):
             continue
         tiles = [read_tile(path, satellite, target_axes=(lat[rows], lon[cols]))
                  for satellite, path in sorted(inputs[key].items())]
-        times, local_times, shared, codes = compare(tiles, state_ids > 0, offsets[target])
+        shared, readings, satellites = compare(tiles, state_ids > 0, offsets[target])
         matched += np.bincount(state_ids[shared], minlength=state_count + 1)
-        active = codes > 0
-        sources.update(tile.path.name for tile, mask in zip(tiles, active) if mask.any())
-        bins = np.floor(np.where(active, local_times, END_HOUR)).astype(np.int16)
-        for slot in np.unique(bins[active]):
-            if slot not in frames:
-                frames[slot] = np.zeros_like(land)
-            # A cell can be sampled twice in an hour. Display its latest reading.
-            selected = bins == slot
-            latest = np.where(selected, times, -1).argmax(axis=0)
-            values = np.take_along_axis(codes, latest[None, ...], axis=0)[0]
-            frames[slot][target] = np.where(selected.any(axis=0), values, 0)
+        sources.update(tiles[index].path.name for index in satellites)
+        frames[:, rows[:, None], cols] = readings
     return frames, corners, counts, matched, sources
 
 
-def write_image(data_dir, pixels, stamp):
-    rgba = COLORS[pixels]
+def write_image(data_dir, radiance, stamp):
+    rgba = np.zeros((*radiance.shape, 4), dtype=np.uint8)
+    valid = np.isfinite(radiance)
+    # A fixed scale keeps faint light visible and preserves the order of readings.
+    brightness = np.arcsinh(np.clip(radiance[valid], 0, RADIANCE_MAX) / 2) / np.arcsinh(RADIANCE_MAX / 2)
+    colors = np.array([ImageColor.getrgb(color) for color in RADIANCE_COLORS])
+    stops = np.linspace(0, 1, len(colors))
+    for channel in range(3):
+        rgba[:, :, channel][valid] = np.rint(np.interp(brightness, stops, colors[:, channel]))
+    rgba[:, :, 3][valid] = 255
     fingerprint = sha256(rgba.tobytes()).hexdigest()[:12]
-    filename = f'2025/overnight/local-{stamp}-{fingerprint}.png'
+    filename = f'2025/overnight/matched-{stamp}-{fingerprint}.png'
     Image.fromarray(rgba).save(data_dir / filename, optimize=True)
     return filename
 
@@ -164,37 +151,36 @@ def main():
     geometries = [(transform_geom('EPSG:4326', 'EPSG:3857', state['geometry']), index)
                   for index, state in enumerate(states, 1)]
     output, corners, totals, shared, sources = read_region(geometries, inputs, len(states), args.time_zones)
-    if len(output) < 2:
-        parser.error('At least two observed hours are needed to publish playback.')
+    cell_count = int(shared[1:].sum())
+    if cell_count == 0:
+        parser.error('No cells passed the comparison checks in both hours.')
     (args.data_dir / '2025/overnight').mkdir(parents=True, exist_ok=True)
     frames = []
-    for slot, pixels in sorted(output.items()):
+    for slot, pixels in zip((EARLY_HOUR, LATE_HOUR), output):
         label = f'{clock(slot)} to {clock(slot + 1)} local time'
         filename = write_image(args.data_dir, pixels, f'{slot % 24:02}00')
-        count = int(np.count_nonzero(pixels))
-        frames.append({'localHour': int(slot), 'label': label, 'cellCount': count,
+        frames.append({'localHour': slot, 'label': label, 'cellCount': cell_count,
                        'tiles': [{'name': 'Lower 48', 'raster': {'url': filename, 'coordinates': corners}}]})
-        print(f'{label}: {count:,} cells displayed.', flush=True)
 
     path = args.data_dir / 'manifest.json'
     manifest = json.loads(path.read_text(encoding='utf-8'))
     year = manifest['years']['2025']
     year.pop('overnightPreview', None)
     year['overnight'] = {
-        'region': 'Lower 48', 'startLocalHour': START_HOUR, 'endLocalHour': END_HOUR,
-        'cutoff': CUTOFF, 'maxViewDifference': MAX_VIEW_DIFFERENCE, 'frameMinutes': 60,
-        'matchedCells': int(shared[1:].sum()), 'totalCells': int(totals[1:].sum()),
+        'region': 'Lower 48', 'startLocalHour': EARLY_HOUR, 'endLocalHour': LATE_HOUR + 1,
+        'fixedFootprint': True, 'radianceMax': RADIANCE_MAX, 'radianceColors': RADIANCE_COLORS,
+        'maxViewDifference': MAX_VIEW_DIFFERENCE, 'frameMinutes': 60,
+        'matchedCells': cell_count, 'totalCells': int(totals[1:].sum()),
         'sourceLabel': 'NASA Black Marble A1 · NOAA-20, NOAA-21, and Suomi NPP',
         'sourceFiles': sorted(sources),
         'stateCoverage': [{'name': state['properties']['name'], 'matchedCells': int(shared[index]),
                            'totalCells': int(totals[index])} for index, state in enumerate(states, 1)],
-        'legend': [{'color': color, 'label': label} for color, label in LEGEND],
         'frames': frames,
     }
     temporary = path.with_suffix('.json.tmp')
     temporary.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     temporary.replace(path)
-    print(f'{len(frames)} local hours, {shared[1:].sum():,} of {totals[1:].sum():,} cells compared.')
+    print(f'{cell_count:,} of {totals[1:].sum():,} cells compared in both snapshots.')
 
 
 if __name__ == '__main__':

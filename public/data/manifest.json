@@ -173,12 +173,19 @@
       },
       "overnight": {
         "region": "Lower 48",
-        "startLocalHour": -5,
-        "endLocalHour": 7,
-        "cutoff": 5,
+        "startLocalHour": 2,
+        "endLocalHour": 4,
+        "fixedFootprint": true,
+        "radianceMax": 40,
+        "radianceColors": [
+          "#263545",
+          "#715635",
+          "#d89342",
+          "#ffedb1"
+        ],
         "maxViewDifference": 20,
         "frameMinutes": 60,
-        "matchedCells": 752803,
+        "matchedCells": 567856,
         "totalCells": 1476771,
         "sourceLabel": "NASA Black Marble A1 · NOAA-20, NOAA-21, and Suomi NPP",
         "sourceFiles": [
@@ -220,7 +227,6 @@
           "VNP46A1.A2025294.h06v05.002.2025295121229.h5",
           "VNP46A1.A2025294.h07v04.002.2025295121300.h5",
           "VNP46A1.A2025294.h07v05.002.2025295121307.h5",
-          "VNP46A1.A2025294.h07v06.002.2025295121307.h5",
           "VNP46A1.A2025294.h08v04.002.2025295121436.h5",
           "VNP46A1.A2025294.h08v05.002.2025295121437.h5",
           "VNP46A1.A2025294.h08v06.002.2025295121437.h5",
@@ -228,18 +234,17 @@
           "VNP46A1.A2025294.h09v05.002.2025295121530.h5",
           "VNP46A1.A2025294.h09v06.002.2025295121525.h5",
           "VNP46A1.A2025294.h10v04.002.2025295121600.h5",
-          "VNP46A1.A2025294.h10v05.002.2025295121557.h5",
-          "VNP46A1.A2025294.h11v04.002.2025295121645.h5"
+          "VNP46A1.A2025294.h10v05.002.2025295121557.h5"
         ],
         "stateCoverage": [
           {
             "name": "Alabama",
-            "matchedCells": 20639,
+            "matchedCells": 13926,
             "totalCells": 21119
           },
           {
             "name": "Arizona",
-            "matchedCells": 25396,
+            "matchedCells": 2196,
             "totalCells": 48414
           },
           {
@@ -249,12 +254,12 @@
           },
           {
             "name": "California",
-            "matchedCells": 41953,
+            "matchedCells": 38158,
             "totalCells": 72195
           },
           {
             "name": "Colorado",
-            "matchedCells": 33719,
+            "matchedCells": 33654,
             "totalCells": 49755
           },
           {
@@ -274,27 +279,27 @@
           },
           {
             "name": "Florida",
-            "matchedCells": 6339,
+            "matchedCells": 3637,
             "totalCells": 21993
           },
           {
             "name": "Georgia",
-            "matchedCells": 21622,
+            "matchedCells": 20900,
             "totalCells": 23983
           },
           {
             "name": "Idaho",
-            "matchedCells": 20292,
+            "matchedCells": 2696,
             "totalCells": 47219
           },
           {
             "name": "Illinois",
-            "matchedCells": 16012,
+            "matchedCells": 15455,
             "totalCells": 27727
           },
           {
             "name": "Indiana",
-            "matchedCells": 3212,
+            "matchedCells": 1142,
             "totalCells": 17711
           },
           {
@@ -304,12 +309,12 @@
           },
           {
             "name": "Kansas",
-            "matchedCells": 36452,
+            "matchedCells": 22041,
             "totalCells": 38622
           },
           {
             "name": "Kentucky",
-            "matchedCells": 11998,
+            "matchedCells": 8646,
             "totalCells": 18510
           },
           {
@@ -319,7 +324,7 @@
           },
           {
             "name": "Maine",
-            "matchedCells": 408,
+            "matchedCells": 395,
             "totalCells": 19309
           },
           {
@@ -334,17 +339,17 @@
           },
           {
             "name": "Michigan",
-            "matchedCells": 121,
+            "matchedCells": 113,
             "totalCells": 32959
           },
           {
             "name": "Minnesota",
-            "matchedCells": 3253,
+            "matchedCells": 3251,
             "totalCells": 51035
           },
           {
             "name": "Mississippi",
-            "matchedCells": 12205,
+            "matchedCells": 12149,
             "totalCells": 19499
           },
           {
@@ -354,17 +359,17 @@
           },
           {
             "name": "Montana",
-            "matchedCells": 44220,
+            "matchedCells": 29716,
             "totalCells": 91135
           },
           {
             "name": "Nebraska",
-            "matchedCells": 31264,
+            "matchedCells": 16141,
             "totalCells": 39848
           },
           {
             "name": "Nevada",
-            "matchedCells": 7263,
+            "matchedCells": 3255,
             "totalCells": 53338
           },
           {
@@ -379,7 +384,7 @@
           },
           {
             "name": "New Mexico",
-            "matchedCells": 25498,
+            "matchedCells": 24754,
             "totalCells": 51585
           },
           {
@@ -389,27 +394,27 @@
           },
           {
             "name": "North Carolina",
-            "matchedCells": 13940,
+            "matchedCells": 13938,
             "totalCells": 21753
           },
           {
             "name": "North Dakota",
-            "matchedCells": 11812,
+            "matchedCells": 7261,
             "totalCells": 44614
           },
           {
             "name": "Ohio",
-            "matchedCells": 10084,
+            "matchedCells": 9740,
             "totalCells": 20474
           },
           {
             "name": "Oklahoma",
-            "matchedCells": 22472,
+            "matchedCells": 19568,
             "totalCells": 30538
           },
           {
             "name": "Oregon",
-            "matchedCells": 34753,
+            "matchedCells": 22714,
             "totalCells": 53997
           },
           {
@@ -429,22 +434,22 @@
           },
           {
             "name": "South Dakota",
-            "matchedCells": 20378,
+            "matchedCells": 15502,
             "totalCells": 43490
           },
           {
             "name": "Tennessee",
-            "matchedCells": 15084,
+            "matchedCells": 13210,
             "totalCells": 18501
           },
           {
             "name": "Texas",
-            "matchedCells": 64529,
+            "matchedCells": 41303,
             "totalCells": 105595
           },
           {
             "name": "Utah",
-            "matchedCells": 18997,
+            "matchedCells": 6656,
             "totalCells": 40865
           },
           {
@@ -454,97 +459,40 @@
           },
           {
             "name": "Virginia",
-            "matchedCells": 11901,
+            "matchedCells": 11898,
             "totalCells": 18583
           },
           {
             "name": "Washington",
-            "matchedCells": 21399,
+            "matchedCells": 12129,
             "totalCells": 42618
           },
           {
             "name": "West Virginia",
-            "matchedCells": 11102,
+            "matchedCells": 11096,
             "totalCells": 11421
           },
           {
             "name": "Wisconsin",
-            "matchedCells": 8027,
+            "matchedCells": 7562,
             "totalCells": 31956
           },
           {
             "name": "Wyoming",
-            "matchedCells": 25953,
+            "matchedCells": 22548,
             "totalCells": 52711
-          }
-        ],
-        "legend": [
-          {
-            "color": "#55657a",
-            "label": "Below cutoff at first reading"
-          },
-          {
-            "color": "#d8a454",
-            "label": "Above cutoff at first reading"
-          },
-          {
-            "color": "#344259",
-            "label": "Below cutoff at both readings"
-          },
-          {
-            "color": "#76a9ff",
-            "label": "Dropped below cutoff"
-          },
-          {
-            "color": "#72d7ad",
-            "label": "Rose above cutoff"
-          },
-          {
-            "color": "#ffc56e",
-            "label": "Above cutoff at both readings"
           }
         ],
         "frames": [
           {
-            "localHour": 1,
-            "label": "1 AM to 2 AM local time",
-            "cellCount": 31179,
-            "tiles": [
-              {
-                "name": "Lower 48",
-                "raster": {
-                  "url": "2025/overnight/local-0100-e6841f730b82.png",
-                  "coordinates": [
-                    [
-                      -125.0185380909138,
-                      50.004181299931474
-                    ],
-                    [
-                      -65.99922392426123,
-                      50.004181299931474
-                    ],
-                    [
-                      -65.99922392426123,
-                      23.980236288921997
-                    ],
-                    [
-                      -125.0185380909138,
-                      23.980236288921997
-                    ]
-                  ]
-                }
-              }
-            ]
-          },
-          {
             "localHour": 2,
             "label": "2 AM to 3 AM local time",
-            "cellCount": 637186,
+            "cellCount": 567856,
             "tiles": [
               {
                 "name": "Lower 48",
                 "raster": {
-                  "url": "2025/overnight/local-0200-d8432dd0f8e7.png",
+                  "url": "2025/overnight/matched-0200-8144b0fbbb28.png",
                   "coordinates": [
                     [
                       -125.0185380909138,
@@ -570,74 +518,12 @@
           {
             "localHour": 3,
             "label": "3 AM to 4 AM local time",
-            "cellCount": 686641,
+            "cellCount": 567856,
             "tiles": [
               {
                 "name": "Lower 48",
                 "raster": {
-                  "url": "2025/overnight/local-0300-e5615722778d.png",
-                  "coordinates": [
-                    [
-                      -125.0185380909138,
-                      50.004181299931474
-                    ],
-                    [
-                      -65.99922392426123,
-                      50.004181299931474
-                    ],
-                    [
-                      -65.99922392426123,
-                      23.980236288921997
-                    ],
-                    [
-                      -125.0185380909138,
-                      23.980236288921997
-                    ]
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "localHour": 4,
-            "label": "4 AM to 5 AM local time",
-            "cellCount": 77616,
-            "tiles": [
-              {
-                "name": "Lower 48",
-                "raster": {
-                  "url": "2025/overnight/local-0400-4ba87df92dc2.png",
-                  "coordinates": [
-                    [
-                      -125.0185380909138,
-                      50.004181299931474
-                    ],
-                    [
-                      -65.99922392426123,
-                      50.004181299931474
-                    ],
-                    [
-                      -65.99922392426123,
-                      23.980236288921997
-                    ],
-                    [
-                      -125.0185380909138,
-                      23.980236288921997
-                    ]
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "localHour": 5,
-            "label": "5 AM to 6 AM local time",
-            "cellCount": 181,
-            "tiles": [
-              {
-                "name": "Lower 48",
-                "raster": {
-                  "url": "2025/overnight/local-0500-9b6a7e59039b.png",
+                  "url": "2025/overnight/matched-0300-11871dc35a00.png",
                   "coordinates": [
                     [
                       -125.0185380909138,

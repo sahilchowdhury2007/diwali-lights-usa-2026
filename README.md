@@ -6,7 +6,7 @@ An open experiment: can unusual nighttime brightness around Diwali be detected i
 
 ## Current state
 
-The 2025 view opens the national NOAA-20 comparison, with the Lower 48 playback by local hour below the same map. The daily layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Click a daily map cell to inspect the data. Use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
+The 2025 view opens the national NOAA-20 comparison, with the **Same places over time** playback below the map. It compares the same Lower 48 grid cells at two local hours. The daily layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Click a daily map cell to inspect the data. Use **Map View** to explore Alaska, Hawaii, and the Western Aleutians. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
 
 ## Run locally
 
@@ -80,7 +80,7 @@ try {
 python scripts/prepare-us-overnight-2025.py --time-zones "$env:USERPROFILE/Downloads/timezones-now.geojson.zip"
 ```
 
-The builder writes hourly Lower 48 frames to `public/data/2025/overnight` and updates `public/data/manifest.json` with source filenames and coverage by state. Run `npm run build` and check the playback before publishing. [2025 playback methodology](docs/methodology.md#2025-us-overnight-playback)
+The builder writes two Lower 48 brightness snapshots to `public/data/2025/overnight` and updates `public/data/manifest.json` with source filenames and coverage by state. Run `npm run build` and check the playback before publishing. [2025 playback methodology](docs/methodology.md#2025-us-overnight-playback)
 
 ### 2026 Phoenix overnight pilot
 

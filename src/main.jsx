@@ -34,6 +34,14 @@ function formatDate(date) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
 }
 
+function setPlaybackBlend(map, opacity, blend) {
+  const laterOpacity = opacity * blend;
+  // Compensate for the top layer covering the bottom layer during the fade.
+  const earlierOpacity = laterOpacity === 1 ? 0 : opacity * (1 - blend) / (1 - laterOpacity);
+  map.setPaintProperty('excess-light-0', 'raster-opacity', earlierOpacity);
+  map.setPaintProperty('excess-light-1', 'raster-opacity', laterOpacity);
+}
+
 function App() {
   const [year, setYear] = useState(2025);
   const [manifest, setManifest] = useState(null);
@@ -48,6 +56,7 @@ function App() {
   const [overnightIndex, setOvernightIndex] = useState(0);
   const mapContainer = useRef(null);
   const map = useRef(null);
+  const playbackBlend = useRef(null);
   const yearData = manifest?.years?.[year];
   const date = yearData?.eventDate ?? dates[year];
   const national = yearData?.national;
@@ -56,9 +65,12 @@ function App() {
   const overnightPasses = useMemo(() => getOvernightPasses(night), [night]);
   const nationalPlayback = Boolean(night?.frameMinutes && overnightPasses.length);
   const localPlayback = Number.isInteger(night?.startLocalHour);
+  const matchedPlayback = night?.fixedFootprint === true && overnightPasses.length === 2;
   const overnightMode = showOvernight && overnightPasses.length > 0;
+  const matchedMode = overnightMode && matchedPlayback;
   const localOvernightMode = localPlayback && overnightMode;
   const overnightPass = overnightMode ? overnightPasses[overnightIndex] : null;
+  const matchedTiles = useMemo(() => overnightPasses.map(pass => pass.tiles[0]), [overnightPasses]);
   const areaBounds = useMemo(() => {
     if (localOvernightMode) return locations['United States'];
     if (area !== 'overnight') return locations[area];
@@ -72,7 +84,7 @@ function App() {
     : coverageMode ? 'Shows how much of each map cell has enough usable satellite readings to compare Diwali with ordinary nights. Use this layer to spot gaps in the data.'
       : strongMode ? `Shows only increases above +${number.format(nationalView.strongChangeMin)} ${unit}. This makes larger increases easier to spot.`
         : `Shows where Diwali was brighter than the median of ordinary nights. Gold appears where at least ${percent.format(nationalView.minCoverage)} of a cell has usable comparisons.`;
-  const displayed = (overnightMode ? overnightPass.tiles : nationalView?.tiles) ?? emptyTiles;
+  const displayed = (matchedMode ? matchedTiles : overnightMode ? overnightPass.tiles : nationalView?.tiles) ?? emptyTiles;
   const hasRaster = displayed.length > 0;
   const legend = displayed[0]?.raster;
 
@@ -100,13 +112,13 @@ function App() {
   }
 
   useEffect(() => {
-    if (!overnightMode) return;
+    if (!overnightMode || matchedMode) return;
     const nextPass = overnightPasses[overnightIndex + 1];
     nextPass?.tiles.forEach(({ raster }) => {
       const image = new Image();
       image.src = dataUrl(raster.url);
     });
-  }, [overnightMode, overnightIndex, overnightPasses]);
+  }, [overnightMode, matchedMode, overnightIndex, overnightPasses]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -173,7 +185,12 @@ function App() {
     const layers = displayed.map(({ raster }, index) => {
       const id = `excess-light-${index}`;
       instance.addSource(id, { type: 'image', url: dataUrl(raster[layerUrlKey]), coordinates: raster.coordinates });
-      instance.addLayer({ id, type: 'raster', source: id, paint: { 'raster-fade-duration': 0, 'raster-resampling': 'nearest' } }, 'state-borders');
+      const paint = { 'raster-fade-duration': 0, 'raster-resampling': 'nearest' };
+      if (matchedMode) {
+        paint['raster-opacity'] = 0;
+        paint['raster-opacity-transition'] = { duration: 0, delay: 0 };
+      }
+      instance.addLayer({ id, type: 'raster', source: id, paint }, 'state-borders');
       return id;
     });
     return () => {
@@ -183,12 +200,37 @@ function App() {
         instance.removeSource(id);
       });
     };
-  }, [layerUrlKey, displayed, mapReady]);
+  }, [layerUrlKey, displayed, mapReady, matchedMode]);
 
   useEffect(() => {
-    if (!mapReady || !map.current) return;
-    displayed.forEach((_, index) => map.current.setPaintProperty(`excess-light-${index}`, 'raster-opacity', opacity / 100));
-  }, [layerUrlKey, displayed, opacity, mapReady]);
+    const instance = map.current;
+    if (!mapReady || !instance) return;
+    const alpha = opacity / 100;
+    if (!matchedMode) {
+      playbackBlend.current = null;
+      displayed.forEach((_, index) => instance.setPaintProperty(`excess-light-${index}`, 'raster-opacity', alpha));
+      return;
+    }
+
+    const from = playbackBlend.current ?? overnightIndex;
+    if (from === overnightIndex || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      playbackBlend.current = overnightIndex;
+      setPlaybackBlend(instance, alpha, overnightIndex);
+      return;
+    }
+
+    const started = performance.now();
+    let animation;
+    function fade(now) {
+      const progress = Math.min((now - started) / 1000, 1);
+      const blend = from + (overnightIndex - from) * progress;
+      playbackBlend.current = blend;
+      setPlaybackBlend(instance, alpha, blend);
+      if (progress < 1) animation = window.requestAnimationFrame(fade);
+    }
+    animation = window.requestAnimationFrame(fade);
+    return () => window.cancelAnimationFrame(animation);
+  }, [layerUrlKey, displayed, opacity, mapReady, matchedMode, overnightIndex]);
 
   useEffect(() => {
     const instance = map.current;
@@ -278,7 +320,9 @@ function App() {
           <div className="rule" />
           {overnightMode ? <div className="layer-picker">
             <span className="field-label">SATELLITE LAYER</span>
-            <p className="layer-description">Colors show how each cell compares with its first comparable reading. The satellite measures total light in each cell, so a decrease can have several causes.</p>
+            <p className="layer-description">{matchedMode
+              ? 'Compare the same places at two times. Brighter gold means more light reached the satellite.'
+              : 'Colors show how each cell compares with its first comparable reading. The satellite measures total light in each cell, so a decrease can have several causes.'}</p>
           </div> : nationalView ? <div className="layer-picker">
             <label className="field-label" htmlFor="satellite-layer">SATELLITE LAYER</label>
             <select id="satellite-layer" aria-describedby="layer-description" value={coverageMode ? 'coverage' : strongMode ? 'strong' : 'change'} onChange={event => setSatelliteLayer(event.target.value)}>
@@ -297,11 +341,11 @@ function App() {
           <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
             {overnightMode ? <>
               {nationalPlayback ? <>
-                <p>{overnightPasses.length} {localPlayback ? 'local hours' : 'observation windows'} · {number.format(night.matchedCells)} of {number.format(night.totalCells)} grid cells compared.</p>
+                <p>{number.format(night.matchedCells)} of {number.format(night.totalCells)} grid cells compared{matchedMode ? ' in both snapshots' : ''}.</p>
                 <p>Comparable readings in {night.stateCoverage.filter(state => state.matchedCells > 0).length} of {night.stateCoverage.length} jurisdictions.</p>
               </> : <p>{overnightPasses.length} satellite passes · {number.format(night.matchedCells)} cells compared.</p>}
               {night.sourceLabel && <p>{night.sourceLabel}</p>}
-              <p>Cutoff: {number.format(night.cutoff)} {unit}. Viewing geometry can affect brightness between passes.</p>
+              <p>{matchedMode ? 'Satellite brightness combines light from all sources. Viewing conditions can also affect the readings.' : `Cutoff: ${number.format(night.cutoff)} ${unit}. Viewing geometry can affect brightness between passes.`}</p>
             </> : nationalView ? <>
               <p>Event brightness compared with the median of at least three ordinary nights.</p>
               <p>Brightness increases are shown where at least {percent.format(nationalView.minCoverage)} of a cell has matched coverage.</p>
@@ -316,7 +360,12 @@ function App() {
             <div className="map-top"><span className="map-tag"><i /> {overnightMode ? 'VIIRS OVERNIGHT' : 'NASA BLACK MARBLE'}</span><span className="map-date">{formatDate(date)}</span></div>
             {!hasRaster && <div className="empty-map"><span className="empty-icon">✧</span><h3>{emptyTitle}</h3><p>{emptyMessage}</p></div>}
             {mapError && <p className="map-error" role="status">Some map resources could not load. Check your internet connection and WebGL support.</p>}
-            {overnightMode ? <div className="map-legend">
+            {matchedMode ? <div className="map-legend">
+              <span>MEASURED BRIGHTNESS</span>
+              <div className="legend-ramp" style={{ background: `linear-gradient(90deg, ${night.radianceColors.join(', ')})` }} />
+              <div className="legend-labels"><span>0</span><span>≥ {night.radianceMax} {unit}</span></div>
+              <p>Both snapshots use the same scale. Blank areas lack a comparable pair.</p>
+            </div> : overnightMode ? <div className="map-legend">
               <span>{nationalPlayback ? 'NIGHTTIME BRIGHTNESS' : overnightPass.reference ? 'FIRST MEASURED PASS' : 'COMPARED WITH FIRST PASS'}</span>
               <ul className="overnight-legend">{(night.legend ?? overnightPass.legend)?.map(({ color, label }) =>
                 <li key={label}><i style={{ background: color }} />{label}</li>)}</ul>
@@ -345,7 +394,7 @@ function App() {
                 if (!nationalPlayback) setArea('overnight');
                 selectOvernightFrame(overnightIndex);
               }}>
-                {localPlayback ? 'Hourly Lower 48 playback' : `Overnight playback · ${night.region}`}
+                {matchedPlayback ? 'Same places over time' : `Overnight playback · ${night.region}`}
               </button>
             </div>}
           </div>
@@ -361,7 +410,7 @@ function App() {
         {showMethod && <div className="method-copy">
           <p>The daily comparison subtracts the median of at least three usable ordinary nights from the NOAA-20 Diwali reading. The map shows where brightness increased and where cloud and quality checks left enough coverage to compare.</p>
           <p>In 2025, Los Angeles was brighter across several well-covered comparisons. Results varied across metro areas, so the measurements leave the cause of those increases open.</p>
-          <p>Overnight playback compares brightness against a fixed cutoff at repeated observations of the same location. Clouds, viewing angles, and gaps between overpasses limit what the sequence can show.</p>
+          <p>The 2025 overnight playback compares two readings of the same locations on a shared brightness scale. Clouds, viewing angles, and gaps between overpasses limit what the sequence can show.</p>
           <a href="https://github.com/sahilchowdhury2007/diwali-lights-usa-2026/blob/main/docs/methodology.md" target="_blank" rel="noreferrer">Read the methodology and results ↗</a>
         </div>}
       </section>
