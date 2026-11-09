@@ -4,6 +4,7 @@ import * as maplibre from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { addCityLabels } from './city-labels.js';
+import { PlaceSearch } from './PlaceSearch.jsx';
 import './style.css';
 
 maplibre.setWorkerUrl(workerUrl);
@@ -98,9 +99,14 @@ function App() {
         fitBoundsOptions: { padding: 30 },
         minZoom: 1.5,
         maxZoom: 12,
+        maxPitch: 0,
+        dragRotate: false,
+        touchPitch: false,
         renderWorldCopies: false,
       });
       map.current = instance;
+      instance.keyboard.disableRotation();
+      instance.touchZoomRotate.disableRotation();
       instance.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-right');
       instance.on('load', () => setMapReady(true));
       instance.on('error', () => setMapError(true));
@@ -111,7 +117,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!map.current || !mapReady) return;
+    if (!map.current || !mapReady || !locations[area]) return;
     map.current.fitBounds(locations[area], { padding: 42, duration: 700 });
   }, [area, mapReady]);
 
@@ -221,8 +227,10 @@ function App() {
           <div className="event-row"><span>Festival date</span><strong>{formatDate(dates[year])}</strong></div>
           <label className="field-label" htmlFor="area">MAP VIEW</label>
           <select id="area" value={area} onChange={event => setArea(event.target.value)}>
+            {area === 'search' && <option value="search" disabled>Search result</option>}
             {Object.keys(locations).map(name => <option key={name}>{name}</option>)}
           </select>
+          <PlaceSearch map={map} ready={mapReady} onSelect={() => setArea('search')} />
           <div className="rule" />
           {nationalView ? <div className="layer-picker">
             <label className="field-label" htmlFor="satellite-layer">SATELLITE LAYER</label>
