@@ -44,7 +44,7 @@ function App() {
   const [satelliteLayer, setSatelliteLayer] = useState('change');
   const [opacity, setOpacity] = useState(85);
   const [showMethod, setShowMethod] = useState(false);
-  const [overnightDate, setOvernightDate] = useState(null);
+  const [overnightSelection, setOvernightSelection] = useState(null);
   const [overnightIndex, setOvernightIndex] = useState(0);
   const mapContainer = useRef(null);
   const map = useRef(null);
@@ -52,9 +52,14 @@ function App() {
   const date = yearData?.eventDate ?? dates[year];
   const national = yearData?.national;
   const nationalView = national?.date === date && national.tiles?.length ? national : null;
-  const night = yearData?.overnight;
-  const overnightPasses = useMemo(() => getOvernightPasses(night), [night]);
-  const overnightMode = overnightDate === date && overnightPasses.length > 0;
+  const strictNight = yearData?.overnight;
+  const previewNight = yearData?.overnightPreview;
+  const strictPasses = useMemo(() => getOvernightPasses(strictNight), [strictNight]);
+  const previewPasses = useMemo(() => getOvernightPasses(previewNight), [previewNight]);
+  const inPreview = overnightSelection === 'preview';
+  const night = inPreview ? previewNight : strictNight;
+  const overnightPasses = inPreview ? previewPasses : strictPasses;
+  const overnightMode = overnightSelection !== null && overnightPasses.length > 0;
   const overnightPass = overnightMode ? overnightPasses[overnightIndex] : null;
   const areaBounds = useMemo(() => {
     if (area !== 'overnight') return locations[area];
@@ -73,18 +78,15 @@ function App() {
   const legend = displayed[0]?.raster;
 
   function closeOvernight() {
-    setOvernightDate(null);
+    setOvernightSelection(null);
     if (area === 'overnight') setArea('United States');
   }
 
-  function toggleOvernight() {
-    if (overnightMode) {
-      closeOvernight();
-    } else {
-      setOvernightIndex(0);
-      setOvernightDate(date);
-      setArea('overnight');
-    }
+  function openOvernight(selection) {
+    if (overnightSelection === selection) return;
+    setOvernightIndex(0);
+    setOvernightSelection(selection);
+    setArea('overnight');
   }
 
   useEffect(() => {
@@ -227,7 +229,7 @@ function App() {
   }, [mapReady, displayed, nationalView, overnightMode]);
 
   const stateLabel = dataError ? 'Data unavailable' : !manifest ? 'Loading data index'
-    : overnightMode ? `Overnight playback · ${night.region}`
+    : overnightMode ? `${inPreview ? 'Exploratory playback' : 'Overnight playback'} · ${night.region}`
       : nationalView ? `United States · ${nationalView.satellite}` : 'No processed observation';
   const emptyTitle = dataError ? 'Data index unavailable' : !manifest ? 'Loading observations' : 'Observation pending';
   const emptyMessage = dataError
@@ -286,6 +288,7 @@ function App() {
           <div className="status-card" aria-live="polite"><span className="status-dot" /><div><strong>{stateLabel}</strong>
             {overnightMode ? <>
               <p>{overnightPasses.length} satellite passes · {number.format(night.matchedCells)} cells compared.</p>
+              {inPreview && <p>Exploratory view with up to {number.format(night.maxViewDifference)}° difference in viewing angle. The standard comparison uses 20°.</p>}
               <p>Cutoff: {number.format(night.cutoff)} {unit}. Viewing geometry can affect brightness between passes.</p>
             </> : nationalView ? <>
               <p>Event brightness compared with the median of at least three ordinary nights.</p>
@@ -298,7 +301,7 @@ function App() {
         <div className="map-column">
           <div className="map-stage">
             <div ref={mapContainer} className="map" role="region" aria-label={overnightMode ? 'Overnight satellite observations' : coverageMode ? 'United States matched satellite coverage' : hasRaster ? 'United States measured nighttime brightness change' : 'United States basemap'} />
-            <div className="map-top"><span className="map-tag"><i /> {overnightMode ? 'VIIRS OVERNIGHT' : 'NASA BLACK MARBLE'}</span><span className="map-date">{formatDate(date)}</span></div>
+            <div className="map-top"><span className="map-tag"><i /> {inPreview ? 'VIIRS EXPLORATORY' : overnightMode ? 'VIIRS OVERNIGHT' : 'NASA BLACK MARBLE'}</span><span className="map-date">{formatDate(date)}</span></div>
             {!hasRaster && <div className="empty-map"><span className="empty-icon">✧</span><h3>{emptyTitle}</h3><p>{emptyMessage}</p></div>}
             {mapError && <p className="map-error" role="status">Some map resources could not load. Check your internet connection and WebGL support.</p>}
             {overnightMode ? <div className="map-legend">
@@ -322,11 +325,17 @@ function App() {
           <div className="timeline">
             <div className="timeline-heading"><div><span className="field-label">DIWALI NIGHT</span><strong>{formatDate(date)}</strong></div><span className="relative-day">{nationalView ? 'Daily comparison available' : 'Daily comparison pending'}</span></div>
             {!overnightMode && nationalView && <p className="timeline-note">{nationalView.satellite} daily product · UTC product date {nationalView.productDateUtc}</p>}
-            {overnightPasses.length > 0 && <button type="button" className="overnight-toggle" aria-expanded={overnightMode} onClick={toggleOvernight}>
-              {overnightMode ? 'Return to daily comparison' : `Open overnight playback · ${night.region}`}
-            </button>}
+            {(strictPasses.length > 0 || previewPasses.length > 0) && <div className="overnight-choices" role="group" aria-label="Overnight comparison">
+              {strictPasses.length > 0 && <button type="button" className="overnight-toggle" aria-pressed={overnightSelection === 'strict'} onClick={() => openOvernight('strict')}>
+                {previewPasses.length ? `Standard playback · ${strictNight.region}` : `Open overnight playback · ${strictNight.region}`}
+              </button>}
+              {previewPasses.length > 0 && <button type="button" className="overnight-toggle" aria-pressed={inPreview} onClick={() => openOvernight('preview')}>
+                {previewPasses.length} passes · exploratory ({number.format(previewNight.maxViewDifference)}°)
+              </button>}
+              {overnightMode && <button type="button" className="overnight-toggle" onClick={closeOvernight}>Return to daily comparison</button>}
+            </div>}
           </div>
-          {overnightMode && <OvernightPlayback night={night} passes={overnightPasses} index={overnightIndex} onSelect={setOvernightIndex} />}
+          {overnightMode && <OvernightPlayback key={overnightSelection} night={night} passes={overnightPasses} index={overnightIndex} onSelect={setOvernightIndex} />}
         </div>
       </section>
 

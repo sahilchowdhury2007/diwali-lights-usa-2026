@@ -83,10 +83,14 @@ def main():
     parser.add_argument("--year", required=True, type=int, choices=WINDOWS)
     parser.add_argument("--region", required=True, help="Region covered by these rasters")
     parser.add_argument("--cutoff", required=True, type=float, help="Brightness threshold in nW/cm²/sr")
+    parser.add_argument("--view-angle-preview", type=float, metavar="DEGREES",
+                        help="Save a separate exploratory sequence made with this wider view-angle limit")
     parser.add_argument("--frame", action="append", required=True, nargs=3, metavar=("UTC", "GEOTIFF", "LABEL"))
     args = parser.parse_args()
     if not math.isfinite(args.cutoff) or args.cutoff <= 0:
         parser.error("--cutoff must be a positive, finite radiance.")
+    if args.view_angle_preview is not None and not 20 < args.view_angle_preview <= 60:
+        parser.error("--view-angle-preview must be greater than 20 and at most 60 degrees.")
 
     sunset, sunrise = WINDOWS[args.year]
     start, end = parse_utc(sunset), parse_utc(sunrise)
@@ -116,7 +120,7 @@ def main():
 
     manifest_path = DATA / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    manifest["years"][str(args.year)]["overnight"] = {
+    night = {
         "sunset": sunset,
         "sunrise": sunrise,
         "region": args.region,
@@ -124,6 +128,11 @@ def main():
         "matchedCells": int(shared.sum()),
         "frames": output,
     }
+    key = "overnight"
+    if args.view_angle_preview is not None:
+        key = "overnightPreview"
+        night["maxViewDifference"] = args.view_angle_preview
+    manifest["years"][str(args.year)][key] = night
     updated = manifest_path.with_suffix(".json.tmp")
     updated.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     updated.replace(manifest_path)

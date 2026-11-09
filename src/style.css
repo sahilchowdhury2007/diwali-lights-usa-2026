@@ -81,7 +81,8 @@ input:disabled { cursor: default; opacity: 0.35; }
 .timeline-labels { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; color: #7d8999; font-size: 7px; letter-spacing: 1px; }
 .timeline-note { color: #788493; font-size: 8px; line-height: 1.5; margin: 12px 0 0; }
 .overnight-toggle, .overnight-player button { border: 1px solid #756044; border-radius: 4px; background: #30291f; color: #ffd19b; padding: 7px 10px; font-size: 11px; }
-.overnight-toggle { margin-top: 12px; }
+.overnight-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.overnight-toggle[aria-pressed="true"] { border-color: var(--amber); }
 .overnight-player button:disabled { opacity: 0.4; cursor: default; }
 .overnight-status { color: #aab6c6; font-size: 12px; }
 .overnight-controls { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }

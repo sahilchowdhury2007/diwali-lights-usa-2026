@@ -269,6 +269,155 @@
             ]
           }
         ]
+      },
+      "overnightPreview": {
+        "sunset": "2025-10-20T22:08:00Z",
+        "sunrise": "2025-10-21T14:03:00Z",
+        "region": "Phoenix pilot",
+        "cutoff": 5.0,
+        "matchedCells": 6351,
+        "frames": [
+          {
+            "time": "2025-10-21T08:47:06Z",
+            "label": "NOAA-20 pass",
+            "reference": true,
+            "legend": [
+              {
+                "color": "#40516a",
+                "label": "Below cutoff"
+              },
+              {
+                "color": "#ffc56e",
+                "label": "Above cutoff"
+              }
+            ],
+            "tiles": [
+              {
+                "name": "Phoenix pilot",
+                "raster": {
+                  "url": "2025/overnight/20251021T084706-d6f45adf4947.png",
+                  "coordinates": [
+                    [
+                      -112.6150498054335,
+                      33.884099369798975
+                    ],
+                    [
+                      -111.47643518281201,
+                      33.884099369798975
+                    ],
+                    [
+                      -111.47643518281201,
+                      33.1144111868766
+                    ],
+                    [
+                      -112.6150498054335,
+                      33.1144111868766
+                    ]
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "time": "2025-10-21T09:38:07Z",
+            "label": "NOAA-21 pass",
+            "reference": false,
+            "legend": [
+              {
+                "color": "#40516a",
+                "label": "Below cutoff at both passes"
+              },
+              {
+                "color": "#76a9ff",
+                "label": "Dropped below cutoff"
+              },
+              {
+                "color": "#72d7ad",
+                "label": "Rose above cutoff"
+              },
+              {
+                "color": "#ffc56e",
+                "label": "Above cutoff at both passes"
+              }
+            ],
+            "tiles": [
+              {
+                "name": "Phoenix pilot",
+                "raster": {
+                  "url": "2025/overnight/20251021T093807-5df205019d9f.png",
+                  "coordinates": [
+                    [
+                      -112.6150498054335,
+                      33.884099369798975
+                    ],
+                    [
+                      -111.47643518281201,
+                      33.884099369798975
+                    ],
+                    [
+                      -111.47643518281201,
+                      33.1144111868766
+                    ],
+                    [
+                      -112.6150498054335,
+                      33.1144111868766
+                    ]
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "time": "2025-10-21T10:06:56Z",
+            "label": "Suomi NPP pass",
+            "reference": false,
+            "legend": [
+              {
+                "color": "#40516a",
+                "label": "Below cutoff at both passes"
+              },
+              {
+                "color": "#76a9ff",
+                "label": "Dropped below cutoff"
+              },
+              {
+                "color": "#72d7ad",
+                "label": "Rose above cutoff"
+              },
+              {
+                "color": "#ffc56e",
+                "label": "Above cutoff at both passes"
+              }
+            ],
+            "tiles": [
+              {
+                "name": "Phoenix pilot",
+                "raster": {
+                  "url": "2025/overnight/20251021T100656-10202ce55915.png",
+                  "coordinates": [
+                    [
+                      -112.6150498054335,
+                      33.884099369798975
+                    ],
+                    [
+                      -111.47643518281201,
+                      33.884099369798975
+                    ],
+                    [
+                      -111.47643518281201,
+                      33.1144111868766
+                    ],
+                    [
+                      -112.6150498054335,
+                      33.1144111868766
+                    ]
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "maxViewDifference": 25.0
       }
     },
     "2026": {
