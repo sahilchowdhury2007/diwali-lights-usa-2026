@@ -296,19 +296,26 @@ function App() {
     <main>
       <section className="intro">
         <div><p className="eyebrow">DIWALI NIGHT IN THE UNITED STATES</p><h1>From satellite lights<br /><em>to electricity demand.</em></h1></div>
-        <div className="intro-copy"><p>Which lights stay on for Diwali? The satellite only caught parts of the night, so we turned to hourly grid data. Here’s how demand on Diwali 2025 compared with nearby Mondays.</p><a className="text-button" href="#electricity">Explore the 12-hour timeline <span>↓</span></a></div>
+        <div className="intro-copy"><p>Which lights stay on for Diwali? The satellite only caught parts of the night, so we turned to hourly grid data. Compare electricity demand on Diwali with other nights that started on the same weekday.</p><a className="text-button" href="#electricity">Explore the 12-hour timeline <span>↓</span></a></div>
       </section>
 
-      <GridDemand />
+      <div className="year-picker" id="electricity">
+        <span className="field-label" id="year-label">DIWALI YEAR</span>
+        <div className="segmented" role="group" aria-labelledby="year-label">
+          {[2025, 2026].map(value =>
+            <button type="button" key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => selectYear(value)}>{value}</button>
+          )}
+        </div>
+      </div>
+
+      <GridDemand year={year} />
 
       <section className="workspace" aria-label="Nighttime light explorer">
         <aside className="sidebar">
           <p className="eyebrow">THE ORIGINAL SATELLITE EXPERIMENT</p>
           <h2>What the satellite saw.</h2>
-          <p className="small-copy">Choose a year and region to explore the available nighttime light observations.</p>
-          <label className="field-label" id="year-label">DIWALI YEAR</label>
-          <div className="segmented" role="group" aria-labelledby="year-label">{[2025, 2026].map(value => <button key={value} aria-pressed={year === value} className={year === value ? 'active' : ''} onClick={() => selectYear(value)}>{value}<span>{value === 2025 ? 'THE FIRST TEST' : 'THIS YEAR'}</span></button>)}</div>
-          <div className="event-row"><span>Festival date</span><strong>{formatDate(dates[year])}</strong></div>
+          <p className="small-copy">Choose a region to explore the available nighttime light observations.</p>
+          <div className="event-row"><span>Festival date</span><strong>{formatDate(date)}</strong></div>
           <label className="field-label" htmlFor="area">MAP VIEW</label>
           <select id="area" value={area} onChange={event => selectArea(event.target.value)}>
             {Object.keys(locations).map(name => <option key={name}>{name}</option>)}
@@ -400,7 +407,7 @@ function App() {
       <section className="method" id="method">
         <button className="method-toggle" aria-expanded={showMethod} onClick={() => setShowMethod(!showMethod)}><span><span className="eyebrow">THE METHOD</span><h2>Beautiful maps need careful questions.</h2></span><span className="expand">{showMethod ? '−' : '+'}</span></button>
         {showMethod && <div className="method-copy">
-          <p>The electricity timeline compares grid demand across 12 hours with six nearby Monday nights. The comparison describes how demand differed that night. Estimating Diwali’s contribution would require additional evidence.</p>
+          <p>The electricity timeline compares grid demand across 12 hours with nights that started on the same weekday. The 2025 baseline uses six Mondays, and the 2026 baseline uses three earlier Sundays. Estimating Diwali’s contribution would require additional evidence.</p>
           <p>The daily comparison subtracts the median of at least three usable ordinary nights from the NOAA-20 Diwali reading. The map shows where brightness increased and where cloud and quality checks left enough coverage to compare.</p>
           <p>In 2025, Los Angeles was brighter across several well-covered comparisons. Results varied across metro areas, so the measurements leave the cause of those increases open.</p>
           <p>The 2025 overnight playback compares two readings of the same locations on a shared brightness scale. Clouds, viewing angles, and gaps between overpasses limit what the sequence can show.</p>

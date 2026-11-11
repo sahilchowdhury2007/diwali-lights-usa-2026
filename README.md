@@ -1,24 +1,25 @@
 # Diwali Lights USA 2026
 
-Did U.S. electricity demand rise on Diwali night? This project began by asking which lights stay on for Diwali. The available satellite passes sampled parts of the night, so the 2025 dashboard compares hourly grid demand from 5 p.m. to 5 a.m. with nearby Mondays.
+Did U.S. electricity demand rise on Diwali night? This project began by asking which lights stay on for Diwali. The available satellite passes sampled parts of the night, so the dashboard compares hourly grid demand from 5 p.m. to 5 a.m. with other nights on the same weekday.
 
 [Open the dashboard](https://sahilchowdhury2007.github.io/diwali-lights-usa-2026/) · [Check deployments](https://github.com/sahilchowdhury2007/diwali-lights-usa-2026/actions/workflows/pages.yml)
 
 ## Current state
 
-The dashboard opens with the Lower 48 electricity timeline. Choose any of 13 grid regions, switch between comparison nights before and after Diwali, or use the slider to inspect an hour. [Electricity methodology and results](docs/methodology.md#2025-electricity-demand)
+The year selector updates both the electricity timeline and the satellite explorer. Choose any of 13 grid regions or use the slider to inspect an hour. The 2025 timeline includes Mondays before and after Diwali. The 2026 timeline uses three earlier Sundays. [2025 electricity results](docs/methodology.md#2025-electricity-demand) · [2026 electricity results](docs/methodology.md#2026-electricity-demand)
 
-The original satellite explorer below the timeline includes the daily brightness maps and two matched overnight snapshots for 2025. Use **Map View** to switch between the Lower 48, Alaska, and Hawaii, and select **2026** for the available observations for that year. [2025 satellite results](docs/methodology.md#2025-national-coverage-screen)
+The original satellite explorer below the timeline includes the daily brightness maps and two matched overnight snapshots for 2025. The 2026 satellite view currently has a Phoenix pilot. [2025 satellite results](docs/methodology.md#2025-national-coverage-screen)
 
 ## Reproduce the electricity timeline
 
-Download `eia930-2025half2.zip` from the [archived EIA-930 data](https://zenodo.org/records/21103294). The generator uses Python's standard library.
+Download the [2025 EIA-930 archive](https://zenodo.org/records/21103294) or the [2026 EIA Balance CSV](https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2026_Jul_Dec.csv). The generator uses Python's standard library.
 
 ```powershell
 python scripts/prepare-grid-demand.py "path-to/eia930-2025half2.zip"
+python scripts/prepare-grid-demand.py --year 2026 "path-to/EIA930_BALANCE_2026_Jul_Dec.csv"
 ```
 
-The command writes the hourly series to `src/data/grid-demand-2025.json`. The dashboard uses that file at build time.
+The generator writes the hourly series to `src/data/grid-demand-<year>.json`. The dashboard uses those files at build time.
 
 ## Run locally
 

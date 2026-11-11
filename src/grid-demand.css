@@ -1,10 +1,12 @@
+.year-picker { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; scroll-margin-top: 20px; }
+.year-picker .segmented { width: 180px; margin: 0; }
+
 .grid-demand {
   margin-bottom: 36px;
   padding: clamp(18px, 4vw, 44px);
   border: 1px solid #303641;
   border-radius: 9px;
   background: #10151e;
-  scroll-margin-top: 20px;
 }
 
 .demand-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; }

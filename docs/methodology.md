@@ -15,6 +15,19 @@ The controls are September 22 and 29, October 6 and 27, and November 3 and 10. W
 
 Lower 48 demand was below the median with either the three earlier controls (−9.9%) or the three later controls (−1.1%). Texas was 4.6% below its earlier median and 17.4% above its later median. Both event-night totals fell within the full six-night ranges. Those ranges describe the observed comparison nights. Demand includes all metered grid uses, and the analysis does not adjust for weather or other date-specific changes. These totals quantify differences in grid demand. Estimating the electricity attributable to Diwali would require more evidence.
 
+## 2026 electricity demand
+
+The 2026 timeline covers Sunday, November 8 at 5 p.m. through Monday, November 9 at 5 a.m. It uses the same reporting-hour alignment and aggregation as 2025. The comparisons use October 4, 18, and 25. October 11 leads into a federal holiday, and November 1 has gaps in reported demand for several operators. [EIA Balance CSV](https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2026_Jul_Dec.csv)
+
+All 13 grid regions have complete comparisons from a combined 52 balancing authorities. JEA had seven usable hours on the event night and was left out of both the event and the control totals. EIA may revise the 2026 reports.
+
+| Grid area | Diwali night | Median of three Sundays | Difference | Range of three Sundays |
+| --- | ---: | ---: | ---: | ---: |
+| Lower 48 | 5,033.4 GWh | 5,048.3 GWh | −0.3% | 5,006.8–5,495.3 GWh |
+| Texas | 563.9 GWh | 611.9 GWh | −7.8% | 566.2–655.9 GWh |
+
+The two years use their own weekday baselines and sets of reporting authorities. Each comparison describes grid demand relative to its selected nights.
+
 ## Confirmed scope
 
 - Public static website on GitHub Pages, owned by sahilchowdhury2007.
