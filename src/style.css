@@ -34,7 +34,6 @@ h2 { font-size: 20px; font-weight: 500; letter-spacing: -0.5px; margin: 0 0 12px
 .field-label { display: block; color: #9da7b4; font-size: 8px; letter-spacing: 1.3px; }
 .segmented { margin-top: 12px; padding: 4px; border: 1px solid #343a45; border-radius: 7px; display: flex; gap: 4px; }
 .segmented button { width: 50%; border: 1px solid transparent; background: none; border-radius: 4px; padding: 9px 0; font-size: 16px; color: #8a94a3; }
-.segmented button span { display: block; font-size: 6px; letter-spacing: 1px; margin-top: 4px; }
 .segmented button.active { background: #30291f; border-color: #756044; color: #ffd19b; }
 .event-row { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); margin: 13px 0 28px; }
 .event-row strong { font-weight: 400; color: #c4cbd3; }

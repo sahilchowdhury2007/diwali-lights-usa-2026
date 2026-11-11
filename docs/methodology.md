@@ -1,4 +1,4 @@
-# Analysis decisions and first experiment
+# Diwali Lights USA methodology
 
 ## 2025 electricity demand
 
@@ -28,27 +28,19 @@ All 13 grid regions have complete comparisons from a combined 52 balancing autho
 
 The two years use their own weekday baselines and sets of reporting authorities. Each comparison describes grid demand relative to its selected nights.
 
-## Confirmed scope
-
-- Public static website on GitHub Pages, owned by sahilchowdhury2007.
-- Display title: Diwali Lights USA 2026; planned repo: diwali-lights-usa-2026.
-- A U.S. map with a glow representing measured excess nighttime light.
-- 2025 is the feasibility test; 2026 repeats the analysis and supports comparison.
-- The map does not claim to locate celebrants or quantify crowd sizes.
-
-## Hypothesis
+## Satellite hypothesis
 
 Daily satellite nighttime radiance around Diwali may show positive changes beyond normal variation at some aggregate geographic scales in the United States. A null or indeterminate result is valid. One historical year alone cannot establish causation or reproducibility.
 
 ## Data and quality
 
-Use NASA/VIIRS/002/VNP46A2 and the same-day `DNB_BRDF_Corrected_NTL` band. Keep nonnegative radiance and `Mandatory_Quality_Flag == 0`. The Earth Engine catalog and NASA Collection 2 user guide disagree on flag 1. Both identify 0 as high quality. Report quality losses and valid observation counts. Confirm scale factors, units, and masks before calculating radiance anomalies. [NASA Collection 2 user guide, Table 9](https://ladsweb.modaps.eosdis.nasa.gov/api/v2/content/archives/Document%20Archive/Science%20Data%20Product%20Documentation/Black-Marble_v2.0_UG_2024.pdf)
+The initial Suomi NPP screen used the same-day `DNB_BRDF_Corrected_NTL` band from `NASA/VIIRS/002/VNP46A2`. The strict filter kept nonnegative radiance and `Mandatory_Quality_Flag == 0`. The Earth Engine catalog and NASA Collection 2 user guide both identify flag 0 as high quality. [NASA Collection 2 user guide, Table 9](https://ladsweb.modaps.eosdis.nasa.gov/api/v2/content/archives/Document%20Archive/Science%20Data%20Product%20Documentation/Black-Marble_v2.0_UG_2024.pdf)
 
-Do not interpret a stale or imputed pixel as a new event-night measurement. Missing event or baseline data remains missing. Do not create a glow by distributing electricity demand across city centers or weighting demographic counts.
+The map shows measured radiance changes where both the event and baseline have usable observations. Missing measurements remain missing.
 
 ## Date alignment
 
-Reference festival dates from the supplied project brief are October 20, 2025 and November 8, 2026. The UI currently shows reference dates only. Validate product timestamps and actual overpass times against local evenings before assigning event-night imagery. Inspect adjacent product dates to avoid assigning a post-midnight observation to the wrong evening. Handle time zones and DST explicitly. U.S. events may also be held on nearby weekends; an event window is useful, but must be specified before inspecting favorable results.
+The festival dates used here are October 20, 2025 and November 8, 2026. The map labels the local date of the evening and reports the satellite product date in UTC where available. U.S. celebrations can span nearby dates. Each satellite result below documents its observation window.
 
 ## First diagnostic
 
@@ -175,14 +167,7 @@ Radiance combines light from many sources. A cell can change brightness between 
 
 The same 567,856 of 1,476,771 sampled cells (38.5%) appear in both frames, with qualifying readings in every contiguous state. DC had no qualifying pairs in these two hours.
 
-### Remaining checks
-
-1. Select several test regions and comparison regions before inspecting anomaly maps. Include regions with differing urban brightness, weather, and geography; avoid selecting only apparent hotspots.
-2. Verify adequate same-night and baseline coverage and determine sensible aggregation scales. Begin with daily observations; do not hide event-night gaps in a multi-day composite.
-3. Prespecify an event window and control nights matched for local weekday, season, and retrieval quality. Exclude festival dates from baseline estimation. Examine neighboring holidays and unusual conditions.
-4. Compare observed radiance with a robust local baseline. Report absolute excess, relative excess only where the baseline is sufficient, baseline variability, sample count, and coverage. Do not label a standardized score as a calibrated celebration probability.
-5. Test the same statistic on non-event placebo dates. Account for testing many pixels/regions and spatial dependence before making significance claims. Assess whether the event signal exceeds ordinary fluctuations and retrieval artifacts.
-6. Publish limitations even if the result is weak. Lock the pipeline and display scale before examining 2026, then repeat with the same settings.
+### Ordinary-night comparisons and display threshold
 
 The [ordinary-night check](../earth-engine/10-test-ordinary-nights.js) uses six candidate Monday nights outside the five-date NOAA-20 baseline in Los Angeles and Dallas–Fort Worth. Each pair compares Diwali and one ordinary night with the same baseline on pixels valid for both. It reports signed mean change and the share of pixels above baseline for both nights. For the initial screen, a pair needs at least 70% of the metro's baseline-matched event pixels. The candidate dates span the daylight saving transition, and the screen is descriptive. Verify overpass geometry and local timing before interpreting a possible festival signal.
 
@@ -199,7 +184,7 @@ The pilot had five qualifying Los Angeles pairs and four qualifying Dallas–For
 | +1 | 80.9% | 31.5% | 31.1% | 45.5% |
 | +2 | 68.1% | 20.8% | 19.5% | 29.9% |
 
-Carry forward +0.5 nW/cm²/sr as the candidate display cutoff. It removed about 11 percentage points of ordinary-night highlights in Los Angeles and kept about 99% of the cells highlighted on Diwali at the zero cutoff. The stricter cutoffs removed more ordinary-night highlights and more of the Diwali highlights. Dallas–Fort Worth had a greater average share of ordinary-night highlights at every cutoff. Test the candidate on the separate ordinary nights before adopting it on the dashboard.
+The pilot identified +0.5 nW/cm²/sr for the holdout check. It removed about 11 percentage points of ordinary-night highlights in Los Angeles and kept about 99% of the cells highlighted on Diwali at the zero cutoff. The stricter cutoffs removed more ordinary-night highlights and more of the Diwali highlights. Dallas–Fort Worth had a greater average share of ordinary-night highlights at every cutoff.
 
 All five holdout pairs qualified in Los Angeles. Moving from 0 to +0.5 nW/cm²/sr reduced the average share of ordinary-night highlights from 68.7% to 60.7% and the Diwali share from 94.2% to 91.9%. Diwali led in all five pairs at +0.5, though the December 2 UTC comparison was close at 92.3% versus 87.9%. Two Dallas–Fort Worth pairs qualified, and Diwali led in one of them. The Los Angeles and Dallas results use the same Diwali observation as the pilot.
 
@@ -207,7 +192,7 @@ The national **Stronger increases** layer uses the +0.5 cutoff with the same col
 
 ## Mapping
 
-Render geographically referenced raster exports. A glow may be a display treatment for a validated positive radiance anomaly, but it must preserve the underlying scale and missing-data mask. Excess light is not the number of celebrations. Avoid independently normalizing each year or date to its own maximum. Keep no-observation, insufficient-baseline, no-positive-excess, and not-yet-published states distinct in the eventual layer and hover inspection.
+The dashboard renders geographically referenced raster exports. Map color encodes measured radiance above the baseline where coverage meets the display threshold. The coverage layer shows the fraction of each cell with matched readings.
 
 The base U.S. map includes views for the Lower 48, Alaska (including the Western Aleutians), and Hawaii. The national layer uses a common NOAA-20 control-median baseline. City labels are geographic references. The earlier metro pilots are documented separately above.
 
@@ -215,12 +200,4 @@ The base U.S. map includes views for the Lower 48, Alaska (including the Western
 
 `public/data/manifest.json` stores the local festival date for each year. A published national comparison specifies its UTC product date, satellite, display thresholds, and regional rasters. Raster corners are ordered top-left, top-right, bottom-right, bottom-left. The pixel data uses row-major order with mean radiance change and matched coverage fraction. Missing cells are null.
 
-## Delivery sequence
-
-- Day 1: account setup, coverage/timing checks, first reproducible 2025 test.
-- Day 2: real processed data on the map, numeric inspection, control comparisons, then geographic expansion if feasible.
-- Day 3: 2025/2026 comparison behavior, quality review, GitHub Pages publication, and repeatable refresh instructions. Actual 2026 results depend on publication and valid satellite coverage.
-
-## External dependencies
-
-Google Earth Engine registration/authentication and GitHub account connection remain user actions. The local application and repository files can be developed independently. No background refresh is running, and no 2026 observations are promised before they exist.
+See the [satellite reproduction guide](reproduce-satellite.md) for the processing commands and source data.

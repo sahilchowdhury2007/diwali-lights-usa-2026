@@ -6,4 +6,14 @@ dist/
 .venv/
 __pycache__/
 data/raw/
+
+# Local credentials and downloaded keys
 *.credentials.json
+*.dpapi
+*.pem
+*.key
+*.p12
+*.pfx
+.netrc
+_netrc
+.urs_cookies
