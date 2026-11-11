@@ -1,12 +1,24 @@
 # Diwali Lights USA 2026
 
-An open experiment: can unusual nighttime brightness around Diwali be detected in the United States? Use 2025 to test feasibility, then repeat the same analysis for 2026.
+Did U.S. electricity demand rise on Diwali night? This project began by asking which lights stay on for Diwali. The available satellite passes sampled parts of the night, so the 2025 dashboard compares hourly grid demand from 5 p.m. to 5 a.m. with nearby Mondays.
 
 [Open the dashboard](https://sahilchowdhury2007.github.io/diwali-lights-usa-2026/) · [Check deployments](https://github.com/sahilchowdhury2007/diwali-lights-usa-2026/actions/workflows/pages.yml)
 
 ## Current state
 
-The 2025 view opens the NOAA-20 comparison for the Lower 48, with the **Same places over time** playback below the map. It compares the same grid cells at two local hours. The daily layers show **Brighter than baseline**, **Stronger increases** above +0.5 nW/cm²/sr, and **Matched coverage**. Click a daily map cell to inspect the data. Use **Map View** to switch between the Lower 48, Alaska, and Hawaii. The Alaska view includes the Western Aleutians. See the [2025 results](docs/methodology.md#2025-national-coverage-screen).
+The dashboard opens with the Lower 48 electricity timeline. Choose any of 13 grid regions, switch between comparison nights before and after Diwali, or use the slider to inspect an hour. [Electricity methodology and results](docs/methodology.md#2025-electricity-demand)
+
+The original satellite explorer below the timeline includes the daily brightness maps and two matched overnight snapshots for 2025. Use **Map View** to switch between the Lower 48, Alaska, and Hawaii, and select **2026** for the available observations for that year. [2025 satellite results](docs/methodology.md#2025-national-coverage-screen)
+
+## Reproduce the electricity timeline
+
+Download `eia930-2025half2.zip` from the [archived EIA-930 data](https://zenodo.org/records/21103294). The generator uses Python's standard library.
+
+```powershell
+python scripts/prepare-grid-demand.py "path-to/eia930-2025half2.zip"
+```
+
+The command writes the hourly series to `src/data/grid-demand-2025.json`. The dashboard uses that file at build time.
 
 ## Run locally
 

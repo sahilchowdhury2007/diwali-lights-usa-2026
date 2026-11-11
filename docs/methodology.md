@@ -1,5 +1,20 @@
 # Analysis decisions and first experiment
 
+## 2025 electricity demand
+
+The project began by asking which lights stayed on for Diwali. The available satellite passes provided two late-night snapshots over a common footprint. The electricity comparison asks whether overall grid demand was higher than usual across the full 5 p.m.–5 a.m. window of October 20–21, 2025.
+
+The input is the `Demand (MW)` field from the July–December 2025 Balance file. The comparison includes 53 demand-reporting balancing authorities with positive readings for every hour on the event night and all six control nights. We sum the same set of authorities for each region on all dates. Hours use each authority's reporting clock, which can differ from the local civil time in parts of its service area. The Lower 48 curve adds equivalent reporting hours across regions, so a point can combine readings from several UTC hours. EIA records intervals at their end time, beginning at 6 p.m. for the 5–6 p.m. interval. [EIA Form 930 methodology](https://www.eia.gov/electricity/930-content/about.html) · [Input archive](https://zenodo.org/records/21103294)
+
+The controls are September 22 and 29, October 6 and 27, and November 3 and 10. We used three nearby Mondays on either side of Diwali and skipped the October 13 federal holiday. The hourly chart compares the event with the median and full observed range for each hour. The headline comparison first sums the 12 one-hour readings for each night to obtain MWh, then compares the event total with the median of the six control-night totals.
+
+| Grid area | Diwali night | Median of six Mondays | Difference | Range of six Mondays |
+| --- | ---: | ---: | ---: | ---: |
+| Lower 48 | 5,215.0 GWh | 5,747.0 GWh | −9.3% | 5,162.0–6,043.3 GWh |
+| Texas | 686.4 GWh | 662.7 GWh | +3.6% | 548.0–791.7 GWh |
+
+Lower 48 demand was below the median with either the three earlier controls (−9.9%) or the three later controls (−1.1%). Texas was 4.6% below its earlier median and 17.4% above its later median. Both event-night totals fell within the full six-night ranges. Those ranges describe the observed comparison nights. Demand includes all metered grid uses, and the analysis does not adjust for weather or other date-specific changes. These totals quantify differences in grid demand. Estimating the electricity attributable to Diwali would require more evidence.
+
 ## Confirmed scope
 
 - Public static website on GitHub Pages, owned by sahilchowdhury2007.
